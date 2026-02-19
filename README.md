@@ -28,3 +28,9 @@ Open `http://localhost:3000`.
 - Scope used: `https://www.googleapis.com/auth/calendar.readonly`
 - Data range mirrors your script: from 30 days ago to 365 days ahead.
 - Generated detail strings include Google Maps links and event timing.
+
+## Troubleshooting
+
+- If you see `client_id is required` during Google sign-in, set Google OAuth env vars in your deploy target:
+  - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (primary)
+  - or `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` (also supported)

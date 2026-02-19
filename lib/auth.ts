@@ -8,11 +8,23 @@ interface GoogleTokenResponse {
   refresh_token?: string;
 }
 
+function resolveGoogleOAuthCredentials() {
+  const clientId = process.env.GOOGLE_CLIENT_ID ?? process.env.AUTH_GOOGLE_ID;
+  const clientSecret =
+    process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH_GOOGLE_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      "Missing Google OAuth environment variables. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET (or AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET)."
+    );
+  }
+
+  return { clientId, clientSecret };
+}
+
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-      throw new Error("Missing Google OAuth environment variables.");
-    }
+    const { clientId, clientSecret } = resolveGoogleOAuthCredentials();
 
     const response = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -20,8 +32,8 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
         "Content-Type": "application/x-www-form-urlencoded"
       },
       body: new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        client_id: clientId,
+        client_secret: clientSecret,
         grant_type: "refresh_token",
         refresh_token: String(token.refreshToken ?? "")
       })
@@ -47,49 +59,54 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-          scope:
-            "openid email profile https://www.googleapis.com/auth/calendar.readonly"
+export function getAuthOptions(): NextAuthOptions {
+  const { clientId: googleClientId, clientSecret: googleClientSecret } =
+    resolveGoogleOAuthCredentials();
+
+  return {
+    providers: [
+      GoogleProvider({
+        clientId: googleClientId,
+        clientSecret: googleClientSecret,
+        authorization: {
+          params: {
+            prompt: "consent",
+            access_type: "offline",
+            response_type: "code",
+            scope:
+              "openid email profile https://www.googleapis.com/auth/calendar.readonly"
+          }
         }
-      }
-    })
-  ],
-  session: {
-    strategy: "jwt"
-  },
-  callbacks: {
-    async jwt({ token, account }) {
-      if (account) {
-        return {
-          ...token,
-          accessToken: account.access_token,
-          accessTokenExpires: (account.expires_at ?? 0) * 1000,
-          refreshToken: account.refresh_token ?? token.refreshToken
-        };
-      }
-
-      if (Date.now() < Number(token.accessTokenExpires ?? 0)) {
-        return token;
-      }
-
-      return refreshAccessToken(token);
+      })
+    ],
+    session: {
+      strategy: "jwt"
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub;
+    callbacks: {
+      async jwt({ token, account }) {
+        if (account) {
+          return {
+            ...token,
+            accessToken: account.access_token,
+            accessTokenExpires: (account.expires_at ?? 0) * 1000,
+            refreshToken: account.refresh_token ?? token.refreshToken
+          };
+        }
+
+        if (Date.now() < Number(token.accessTokenExpires ?? 0)) {
+          return token;
+        }
+
+        return refreshAccessToken(token);
+      },
+      async session({ session, token }) {
+        if (session.user) {
+          session.user.id = token.sub;
+        }
+        session.accessToken = token.accessToken as string | undefined;
+        session.error = token.error as string | undefined;
+        return session;
       }
-      session.accessToken = token.accessToken as string | undefined;
-      session.error = token.error as string | undefined;
-      return session;
     }
-  }
-};
+  };
+}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth";
+import { getAuthOptions } from "@/lib/auth";
 import { fetchEventsFromAllCalendars } from "@/lib/google-calendar";
 import { buildMonthlyLocationRollup } from "@/lib/loccal";
 
@@ -18,7 +18,7 @@ function normalizeMonth(month?: string | null) {
 }
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(getAuthOptions());
 
   if (!session?.accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

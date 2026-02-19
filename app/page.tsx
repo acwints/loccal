@@ -2,10 +2,10 @@ import { getServerSession } from "next-auth";
 
 import { LoccalDashboard } from "@/components/loccal-dashboard";
 import { LoginCard } from "@/components/login-card";
-import { authOptions } from "@/lib/auth";
+import { getAuthOptions } from "@/lib/auth";
 
 export default async function Page() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(getAuthOptions());
 
   if (!session) {
     return (
