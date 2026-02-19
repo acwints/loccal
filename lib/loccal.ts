@@ -143,8 +143,11 @@ function trimAddress(location: string) {
 function isValidPlace(location?: string | null) {
   if (!location) return false;
   const normalized = location.trim();
+  if (normalized.length > 140) return false;
   if (/^https?:\/\//i.test(normalized)) return false;
+  if (/\bhttps?:\/\//i.test(normalized) || /\bwww\./i.test(normalized)) return false;
   if (/\S+@\S+\.\S+/.test(normalized)) return false;
+  if ((normalized.match(/,/g) ?? []).length > 5) return false;
   return true;
 }
 
@@ -324,7 +327,7 @@ export function buildMonthlyLocationRollup(
   const multiDayAllDayByCity: Record<string, DayRange[]> = {};
 
   for (const event of events) {
-    const sourceLocation = event.location || event.description;
+    const sourceLocation = event.location?.trim().replace(/\s+/g, " ");
     if (!sourceLocation || !isValidPlace(sourceLocation)) continue;
 
     const cityStateCountry = getCityStateCountryFromLocation(sourceLocation);

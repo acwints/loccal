@@ -158,7 +158,7 @@ p {
   min-height: 126px;
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  padding: 0.5rem;
+  padding: 0;
   background: #fffef9;
 }
 
@@ -166,8 +166,28 @@ p {
   border-right: none;
 }
 
+.day-cell.selected {
+  background: #f1f8ec;
+}
+
 .day-cell.empty {
   background: #f8f5ea;
+}
+
+.day-button {
+  width: 100%;
+  min-height: 126px;
+  border: none;
+  background: transparent;
+  padding: 0.5rem;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.day-button:hover {
+  background: rgba(15, 143, 73, 0.06);
 }
 
 .day-label {
@@ -182,36 +202,21 @@ p {
   color: #7e8b82;
 }
 
-.location-list {
+.city-list {
   display: grid;
   gap: 0.35rem;
   margin-top: 0.35rem;
 }
 
-.location-item {
+.city-pill {
   border: 1px solid #dad5c8;
-  border-radius: 9px;
+  border-radius: 999px;
   background: #fffcf2;
-  padding: 0.3rem 0.45rem;
-}
-
-.location-item summary {
-  cursor: pointer;
-  font-size: 0.79rem;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #163f22;
-}
-
-.location-item ul {
-  margin: 0.35rem 0 0;
-  padding-left: 1rem;
-}
-
-.location-item li {
-  color: #435447;
-  font-size: 0.74rem;
-  line-height: 1.35;
-  margin-bottom: 0.15rem;
+  max-width: fit-content;
 }
 
 .extra {
@@ -220,8 +225,56 @@ p {
   color: #516257;
 }
 
+.day-detail-card {
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(145deg, var(--card), #f7f1df);
+  box-shadow: 0 14px 48px rgba(19, 33, 20, 0.1);
+  padding: 1rem 1.1rem;
+}
+
+.day-detail-card h2 {
+  margin: 0.35rem 0 0.7rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 600;
+  line-height: 1.2;
+  font-size: clamp(1.05rem, 2.3vw, 1.45rem);
+}
+
+.day-detail-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.day-detail-item {
+  border: 1px solid #d7d1c3;
+  border-radius: 12px;
+  background: #fffdf7;
+  padding: 0.65rem 0.8rem;
+}
+
+.day-detail-item h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #163f22;
+}
+
+.day-detail-item ul {
+  margin: 0.45rem 0 0;
+  padding-left: 1rem;
+}
+
+.day-detail-item li {
+  color: #435447;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  margin-bottom: 0.18rem;
+}
+
 @media (max-width: 960px) {
-  .day-cell {
+  .day-cell,
+  .day-button {
     min-height: 102px;
   }
 }

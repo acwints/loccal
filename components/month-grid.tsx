@@ -3,6 +3,8 @@ import type { DayLocation } from "@/lib/loccal";
 interface MonthGridProps {
   monthKey: string;
   days: Record<string, DayLocation[]>;
+  selectedDateKey?: string | null;
+  onSelectDate?: (dateKey: string) => void;
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -17,8 +19,13 @@ function getMonthMeta(monthKey: string) {
   };
 }
 
-export function MonthGrid({ monthKey, days }: MonthGridProps) {
+export function MonthGrid({ monthKey, days, selectedDateKey, onSelectDate }: MonthGridProps) {
   const { firstWeekday, daysInMonth } = getMonthMeta(monthKey);
+
+  function toCityOnlyLabel(location: string) {
+    const [city] = location.split(",");
+    return city?.trim() || location;
+  }
 
   return (
     <div className="month-grid-wrap">
@@ -37,29 +44,30 @@ export function MonthGrid({ monthKey, days }: MonthGridProps) {
           const day = idx + 1;
           const dateKey = `${monthKey}-${String(day).padStart(2, "0")}`;
           const dayLocations = days[dateKey] ?? [];
+          const cityLabels = Array.from(
+            new Set(dayLocations.map((entry) => toCityOnlyLabel(entry.location)))
+          );
+          const isSelected = dateKey === selectedDateKey;
 
           return (
-            <article key={dateKey} className="day-cell">
-              <div className="day-label">{day}</div>
-              {dayLocations.length === 0 ? (
-                <p className="none-label">No location inferred</p>
-              ) : (
-                <div className="location-list">
-                  {dayLocations.slice(0, 3).map((entry) => (
-                    <details key={`${dateKey}-${entry.location}`} className="location-item">
-                      <summary>{entry.location}</summary>
-                      <ul>
-                        {entry.details.map((detail, detailIdx) => (
-                          <li key={`${entry.location}-${detailIdx}`}>{detail}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  ))}
-                  {dayLocations.length > 3 ? (
-                    <p className="extra">+{dayLocations.length - 3} more</p>
-                  ) : null}
-                </div>
-              )}
+            <article key={dateKey} className={`day-cell${isSelected ? " selected" : ""}`}>
+              <button type="button" className="day-button" onClick={() => onSelectDate?.(dateKey)}>
+                <div className="day-label">{day}</div>
+                {cityLabels.length === 0 ? (
+                  <p className="none-label">No city inferred</p>
+                ) : (
+                  <div className="city-list">
+                    {cityLabels.slice(0, 3).map((cityLabel) => (
+                      <span key={`${dateKey}-${cityLabel}`} className="city-pill">
+                        {cityLabel}
+                      </span>
+                    ))}
+                    {cityLabels.length > 3 ? (
+                      <p className="extra">+{cityLabels.length - 3} more</p>
+                    ) : null}
+                  </div>
+                )}
+              </button>
             </article>
           );
         })}

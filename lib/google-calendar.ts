@@ -3,7 +3,6 @@ import { google } from "googleapis";
 export interface CalendarEventInput {
   title: string;
   location?: string | null;
-  description?: string | null;
   isAllDay: boolean;
   start: Date;
   end: Date;
@@ -78,7 +77,6 @@ async function listEventsForCalendar(
       results.push({
         title: event.summary,
         location: event.location,
-        description: event.description,
         isAllDay,
         start,
         end,
