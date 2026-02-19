@@ -43,7 +43,7 @@ export async function GET(request: Request) {
 
   try {
     const { events, timeZone } = await fetchEventsFromAllCalendars(session.accessToken, start, end);
-    const rollup = buildMonthlyLocationRollup(events, month, timeZone);
+    const rollup = await buildMonthlyLocationRollup(events, month, timeZone);
 
     return NextResponse.json({
       ...rollup,

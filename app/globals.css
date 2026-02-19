@@ -132,8 +132,15 @@ p {
 }
 
 .month-grid-wrap {
-  margin-top: 1rem;
   overflow: hidden;
+}
+
+.calendar-layout {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 1rem;
+  align-items: start;
 }
 
 .weekdays,
@@ -225,16 +232,29 @@ p {
   color: #516257;
 }
 
-.day-detail-card {
-  margin-top: 1rem;
+.day-side-panel {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: linear-gradient(145deg, var(--card), #f7f1df);
   box-shadow: 0 14px 48px rgba(19, 33, 20, 0.1);
   padding: 1rem 1.1rem;
+  position: sticky;
+  top: 1rem;
 }
 
-.day-detail-card h2 {
+.day-side-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.close-panel-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.day-side-panel h2 {
   margin: 0.35rem 0 0.7rem;
   font-family: var(--font-display), Georgia, serif;
   font-weight: 600;
@@ -269,10 +289,27 @@ p {
   color: #435447;
   font-size: 0.8rem;
   line-height: 1.35;
-  margin-bottom: 0.18rem;
+  margin-bottom: 0.45rem;
+}
+
+.event-evidence {
+  color: #5b6a61;
+  font-size: 0.76rem;
+}
+
+.event-evidence a {
+  color: #1c6638;
 }
 
 @media (max-width: 960px) {
+  .calendar-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .day-side-panel {
+    position: static;
+  }
+
   .day-cell,
   .day-button {
     min-height: 102px;

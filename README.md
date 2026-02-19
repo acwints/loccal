@@ -28,9 +28,11 @@ Open `http://localhost:3000`.
 - Scope used: `https://www.googleapis.com/auth/calendar.readonly`
 - Data range mirrors your script: from 30 days ago to 365 days ahead.
 - Generated detail strings include Google Maps links and event timing.
+- Location inference now validates candidate locations with geocoding before including them in the monthly rollup.
 
 ## Troubleshooting
 
 - If you see `client_id is required` during Google sign-in, set Google OAuth env vars in your deploy target:
   - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (primary)
   - or `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` (also supported)
+- For stronger location validation in production, set `GOOGLE_MAPS_GEOCODING_API_KEY`.

@@ -51,7 +51,12 @@ export function MonthGrid({ monthKey, days, selectedDateKey, onSelectDate }: Mon
 
           return (
             <article key={dateKey} className={`day-cell${isSelected ? " selected" : ""}`}>
-              <button type="button" className="day-button" onClick={() => onSelectDate?.(dateKey)}>
+              <button
+                type="button"
+                className="day-button"
+                aria-pressed={isSelected}
+                onClick={() => onSelectDate?.(dateKey)}
+              >
                 <div className="day-label">{day}</div>
                 {cityLabels.length === 0 ? (
                   <p className="none-label">No city inferred</p>

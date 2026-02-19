@@ -57,10 +57,20 @@ const US_STATE_MAP: Record<string, string> = {
 };
 
 const US_STATE_CODES = new Set(Object.values(US_STATE_MAP));
+const COUNTRY_NAME_MAP = buildCountryNameMap();
 
 export interface DayLocation {
   location: string;
-  details: string[];
+  events: InferredEvent[];
+}
+
+export interface InferredEvent {
+  title: string;
+  isAllDay: boolean;
+  startIso: string;
+  endIso: string;
+  inferredFrom: string;
+  mapsUrl: string;
 }
 
 export interface MonthlyRollup {
@@ -68,15 +78,155 @@ export interface MonthlyRollup {
   days: Record<string, DayLocation[]>;
 }
 
+interface GeocodeOptions {
+  disableGeocoding: boolean;
+  googleApiKey?: string;
+  enableNominatim: boolean;
+  userAgent: string;
+}
+
+interface GoogleGeocodeComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
+interface GoogleGeocodeResult {
+  address_components: GoogleGeocodeComponent[];
+}
+
+interface GoogleGeocodeResponse {
+  status: string;
+  results: GoogleGeocodeResult[];
+}
+
+interface NominatimGeocodeResult {
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    municipality?: string;
+    hamlet?: string;
+    state?: string;
+    province?: string;
+    country?: string;
+    country_code?: string;
+  };
+}
+
 interface EventGroup {
   start: Date;
-  details: string;
+  event: InferredEvent;
 }
 
 interface DayRange {
   startDay: number;
   endDayExclusive: number;
-  details: string[];
+  events: InferredEvent[];
+}
+
+const NON_LOCATION_WORDS = new Set([
+  "will",
+  "writing",
+  "exercise",
+  "negotiation",
+  "helpful",
+  "launches",
+  "instructions",
+  "available",
+  "pages",
+  "assignments",
+  "assignment",
+  "module",
+  "lecture",
+  "class",
+  "google",
+  "meet",
+  "async",
+  "week",
+  "read",
+  "reading",
+  "watch",
+  "submit",
+  "upload"
+]);
+
+const DISALLOWED_CITY_WORDS = new Set([
+  ...NON_LOCATION_WORDS,
+  "all",
+  "for",
+  "every",
+  "part",
+  "double",
+  "spaced",
+  "from",
+  "about",
+  "into",
+  "through",
+  "across",
+  "inside",
+  "outside"
+]);
+
+const GEO_CITY_COMPONENT_TYPES = [
+  "locality",
+  "postal_town",
+  "administrative_area_level_3",
+  "sublocality",
+  "neighborhood"
+];
+
+function buildCountryNameMap() {
+  const countries = new Map<string, string>();
+
+  countries.set("USA", "USA");
+  countries.set("US", "USA");
+  countries.set("UNITED STATES", "USA");
+  countries.set("UNITED STATES OF AMERICA", "USA");
+  countries.set("CANADA", "Canada");
+  countries.set("CA", "Canada");
+  countries.set("UNITED KINGDOM", "UK");
+  countries.set("UK", "UK");
+  countries.set("GB", "UK");
+  countries.set("GREAT BRITAIN", "UK");
+
+  try {
+    const display = new Intl.DisplayNames(["en"], { type: "region" });
+    const intlWithSupportedValues = Intl as unknown as {
+      supportedValuesOf?: (key: string) => string[];
+    };
+    const regionCodes = intlWithSupportedValues.supportedValuesOf?.("region") ?? [];
+
+    for (const code of regionCodes) {
+      const name = display.of(code);
+      if (!name) continue;
+      const normalizedName = name.trim();
+      if (!normalizedName) continue;
+      countries.set(normalizedName.toUpperCase(), normalizedName);
+    }
+  } catch {
+    // Keep alias-only fallbacks if region display APIs are unavailable.
+  }
+
+  return countries;
+}
+
+function readEnvFlag(name: string, defaultValue: boolean) {
+  const raw = process.env[name];
+  if (!raw) return defaultValue;
+  const normalized = raw.trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+}
+
+function getGeocodeOptions(): GeocodeOptions {
+  return {
+    disableGeocoding: readEnvFlag("LOCCAL_DISABLE_GEOCODING", false),
+    googleApiKey: process.env.GOOGLE_MAPS_GEOCODING_API_KEY?.trim() || undefined,
+    enableNominatim: readEnvFlag("LOCCAL_ENABLE_NOMINATIM_FALLBACK", true),
+    userAgent:
+      process.env.LOCCAL_GEOCODER_USER_AGENT?.trim() ||
+      "LoccalWeb/1.0 (https://loccal-web.vercel.app)"
+  };
 }
 
 function toMonthPrefix(monthKey: string) {
@@ -104,16 +254,10 @@ function normalizeUSState(token: string) {
 }
 
 function normalizeCountry(token?: string) {
-  if (!token) return "";
-  const normalized = token.trim().toUpperCase();
-  if (["USA", "US", "UNITED STATES", "UNITED STATES OF AMERICA"].includes(normalized)) {
-    return "USA";
-  }
-  if (["CANADA", "CA"].includes(normalized)) return "Canada";
-  if (["UNITED KINGDOM", "UK", "GB", "GREAT BRITAIN"].includes(normalized)) {
-    return "UK";
-  }
-  return token.trim();
+  if (!token) return null;
+  const normalized = token.trim().replace(/\./g, "").replace(/\s+/g, " ").toUpperCase();
+  if (!normalized) return null;
+  return COUNTRY_NAME_MAP.get(normalized) ?? null;
 }
 
 function dateKeyToEpochDay(dateKey: string) {
@@ -129,21 +273,13 @@ function epochDayToDateKey(epochDay: number) {
   return `${year}-${month}-${day}`;
 }
 
-function trimAddress(location: string) {
-  const normalized = location.trim().replace(/\s+/g, " ");
-  const commaMatch = normalized.match(/([^,]+,[^,]+)/);
-  if (commaMatch) return commaMatch[1].trim();
-
-  const stateMatch = normalized.match(/([A-Za-z .'\-]+)\s+([A-Z]{2})\b/);
-  if (stateMatch) return `${stateMatch[1].trim()}, ${stateMatch[2]}`;
-
-  return normalized;
-}
-
 function isValidPlace(location?: string | null) {
   if (!location) return false;
   const normalized = location.trim();
+  if (normalized.length < 3) return false;
   if (normalized.length > 140) return false;
+  if (/[\n\r\t]/.test(normalized)) return false;
+  if (/[:;!?]/.test(normalized)) return false;
   if (/^https?:\/\//i.test(normalized)) return false;
   if (/\bhttps?:\/\//i.test(normalized) || /\bwww\./i.test(normalized)) return false;
   if (/\S+@\S+\.\S+/.test(normalized)) return false;
@@ -161,107 +297,277 @@ function isAirport(location: string) {
   return hasAirportKeyword || hasParenIata || hasIataWithAirportWord;
 }
 
+function hasNonLocationWords(segment: string) {
+  const words = segment
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  return words.some((word) => NON_LOCATION_WORDS.has(word));
+}
+
+function isLikelyCitySegment(segment: string) {
+  const trimmed = segment.trim();
+  if (!trimmed) return false;
+  if (trimmed.length < 2 || trimmed.length > 40) return false;
+  if (/\d{2,}/.test(trimmed)) return false;
+  if (!/[a-z]/i.test(trimmed)) return false;
+  if (hasNonLocationWords(trimmed)) return false;
+
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length > 4) return false;
+  if (words.length === 1 && words[0].length < 3) return false;
+  if (words.some((word) => DISALLOWED_CITY_WORDS.has(word.toLowerCase()))) return false;
+  if (words.some((word) => word.length > 20)) return false;
+  return true;
+}
+
 function getCityStateCountryFromLocation(location: string) {
   const raw = location.trim().replace(/\s+/g, " ");
   if (!raw) return null;
 
-  const commaPattern = raw.match(/^\s*([^,]+)\s*,\s*([A-Z]{2,3})\s*(?:,\s*([A-Za-z\s.]+))?/);
-  if (commaPattern) {
-    const city = commaPattern[1].trim();
-    const region = commaPattern[2].trim().toUpperCase();
-    const countryNorm = normalizeCountry(commaPattern[3]) || (isUSState(region) ? "USA" : "");
-    return countryNorm ? `${city}, ${region}, ${countryNorm}` : `${city}, ${region}`;
-  }
+  const parts = raw
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
 
-  const tokens = raw.split(" ");
-  const upper = tokens.map((token) => token.toUpperCase());
-  let stateIdx = -1;
-  let stateCode: string | null = null;
+  if (parts.length >= 2) {
+    const firstPartLooksLikeAddress = /\d/.test(parts[0]);
+    const cityCandidate = firstPartLooksLikeAddress && parts.length >= 3 ? parts[1] : parts[0];
+    const regionPart = firstPartLooksLikeAddress && parts.length >= 3 ? parts[2] : parts[1];
+    const countryPart = firstPartLooksLikeAddress && parts.length >= 4 ? parts[3] : parts[2];
 
-  for (let i = 0; i < upper.length; i += 1) {
-    if (/^[A-Z]{2}$/.test(upper[i]) && isUSState(upper[i])) {
-      stateIdx = i;
-      stateCode = upper[i];
-      break;
+    if (isLikelyCitySegment(cityCandidate)) {
+      const regionToken = regionPart?.replace(/\d{5}(?:-\d{4})?/g, "").trim();
+      const stateCode = regionToken ? normalizeUSState(regionToken) : null;
+
+      if (stateCode) {
+        const country = normalizeCountry(countryPart) ?? "USA";
+        return `${cityCandidate}, ${stateCode}, ${country}`;
+      }
+
+      const country = normalizeCountry(regionToken) ?? normalizeCountry(countryPart);
+      if (country) {
+        return `${cityCandidate}, ${country}`;
+      }
     }
   }
 
-  if (stateIdx === -1) {
-    for (let length = 3; length >= 1; length -= 1) {
-      for (let i = 0; i + length <= upper.length; i += 1) {
-        const joined = upper.slice(i, i + length).join(" ");
-        const normalized = normalizeUSState(joined);
-        if (normalized) {
-          stateIdx = i + length - 1;
-          stateCode = normalized;
-          break;
-        }
-      }
-      if (stateIdx !== -1) break;
-    }
-  }
-
-  if (stateIdx !== -1 && stateCode) {
-    const streetBoundaries = new Set([
-      "ST",
-      "ST.",
-      "STREET",
-      "AVE",
-      "AVENUE",
-      "RD",
-      "RD.",
-      "ROAD",
-      "DR",
-      "DR.",
-      "DRIVE",
-      "BLVD",
-      "BLVD.",
-      "LANE",
-      "LN",
-      "LN.",
-      "WAY",
-      "PL",
-      "PL.",
-      "CT",
-      "CT."
-    ]);
-
-    let cityTokens: string[] = [];
-    for (let i = stateIdx - 1; i >= 0; i -= 1) {
-      const current = upper[i];
-      if (/^\d{5}(-\d{4})?$/.test(current) || /^\d+$/.test(current)) {
-        cityTokens = [];
-        continue;
-      }
-      if (streetBoundaries.has(current)) {
-        cityTokens = [];
-        continue;
-      }
-      cityTokens.unshift(tokens[i]);
-      if (cityTokens.length >= 3) break;
-    }
-
-    const city = cityTokens.join(" ").trim();
-    if (!city) return null;
-
-    const tail = tokens.slice(stateIdx + 1).join(" ").trim();
-    const countryMatch = tail.match(
-      /\b(United States(?: of America)?|USA|US|Canada|CA|United Kingdom|UK|GB)\b/i
-    );
-    const country = countryMatch ? normalizeCountry(countryMatch[0]) : "USA";
-    return `${city}, ${stateCode}, ${country}`;
+  const cityStateCodePattern = raw.match(/^([A-Za-z .'\-]{2,40})\s+([A-Z]{2})$/);
+  if (cityStateCodePattern && isLikelyCitySegment(cityStateCodePattern[1])) {
+    const stateCode = normalizeUSState(cityStateCodePattern[2]);
+    if (stateCode) return `${cityStateCodePattern[1].trim()}, ${stateCode}, USA`;
   }
 
   const cityCountryPattern = raw.match(
-    /^\s*(?:\d+\s+\S+\s+)?([A-Za-z .'\-]+)\s+(USA|US|United States|United States of America|UK|United Kingdom|Canada|CA)\s*$/i
+    /^([A-Za-z .'\-]{2,40})\s+(USA|US|United States|United States of America|UK|United Kingdom|Canada|CA)$/i
   );
-  if (cityCountryPattern) {
+  if (cityCountryPattern && isLikelyCitySegment(cityCountryPattern[1])) {
     const city = cityCountryPattern[1].trim();
     const country = normalizeCountry(cityCountryPattern[2]);
+    if (!country) return null;
     return `${city}, ${country}`;
   }
 
   return null;
+}
+
+function formatResolvedLocation(
+  cityToken: string | undefined,
+  regionToken: string | undefined,
+  countryToken: string | undefined
+) {
+  const city = cityToken?.trim().replace(/\s+/g, " ");
+  if (!city || !isLikelyCitySegment(city)) return null;
+
+  const country =
+    normalizeCountry(countryToken) ??
+    normalizeCountry(countryToken?.toUpperCase()) ??
+    normalizeCountry(countryToken?.toLowerCase());
+
+  if (!country) return null;
+
+  if (country === "USA") {
+    const stateCode = regionToken ? normalizeUSState(regionToken) : null;
+    if (!stateCode) return null;
+    return `${city}, ${stateCode}, USA`;
+  }
+
+  if (country === "Canada") {
+    const province = regionToken?.trim();
+    if (province && province.length <= 24) {
+      return `${city}, ${province}, Canada`;
+    }
+    return `${city}, Canada`;
+  }
+
+  return `${city}, ${country}`;
+}
+
+async function fetchJsonWithTimeout<T>(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number
+): Promise<T | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function shouldTryGeocoding(location: string) {
+  const normalized = location.trim();
+  if (!isValidPlace(normalized)) return false;
+  if (hasNonLocationWords(normalized)) return false;
+  if (normalized.split(/\s+/).length > 10) return false;
+  if ((normalized.match(/,/g) ?? []).length > 4) return false;
+  return true;
+}
+
+async function geocodeWithGoogle(
+  sourceLocation: string,
+  options: GeocodeOptions
+): Promise<string | null> {
+  if (!options.googleApiKey) return null;
+
+  const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+  url.searchParams.set("address", sourceLocation);
+  url.searchParams.set("key", options.googleApiKey);
+
+  const payload = await fetchJsonWithTimeout<GoogleGeocodeResponse>(
+    url.toString(),
+    {
+      headers: {
+        "Accept-Language": "en"
+      }
+    },
+    2500
+  );
+
+  if (!payload || payload.status !== "OK") return null;
+
+  for (const result of payload.results ?? []) {
+    const cityComponent = GEO_CITY_COMPONENT_TYPES.map((type) =>
+      result.address_components.find((component) => component.types.includes(type))
+    ).find(Boolean);
+    const regionComponent = result.address_components.find((component) =>
+      component.types.includes("administrative_area_level_1")
+    );
+    const countryComponent = result.address_components.find((component) =>
+      component.types.includes("country")
+    );
+
+    const resolved = formatResolvedLocation(
+      cityComponent?.long_name,
+      regionComponent?.short_name ?? regionComponent?.long_name,
+      countryComponent?.short_name ?? countryComponent?.long_name
+    );
+    if (resolved) return resolved;
+  }
+
+  return null;
+}
+
+async function geocodeWithNominatim(
+  sourceLocation: string,
+  options: GeocodeOptions
+): Promise<string | null> {
+  if (!options.enableNominatim) return null;
+
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", sourceLocation);
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("addressdetails", "1");
+  url.searchParams.set("limit", "3");
+
+  const payload = await fetchJsonWithTimeout<NominatimGeocodeResult[]>(
+    url.toString(),
+    {
+      headers: {
+        "User-Agent": options.userAgent,
+        "Accept-Language": "en"
+      }
+    },
+    2800
+  );
+
+  if (!payload) return null;
+
+  for (const candidate of payload) {
+    const address = candidate.address;
+    if (!address) continue;
+
+    const city =
+      address.city ??
+      address.town ??
+      address.village ??
+      address.municipality ??
+      address.hamlet;
+
+    const countryToken = address.country ?? address.country_code?.toUpperCase();
+    const regionToken = address.state ?? address.province;
+
+    const resolved = formatResolvedLocation(city, regionToken, countryToken);
+    if (resolved) return resolved;
+  }
+
+  return null;
+}
+
+async function resolveValidatedLocation(
+  sourceLocation: string,
+  options: GeocodeOptions
+): Promise<string | null> {
+  const parserCandidate = getCityStateCountryFromLocation(sourceLocation);
+
+  if (options.disableGeocoding || !shouldTryGeocoding(sourceLocation)) {
+    return parserCandidate;
+  }
+
+  const geocoded =
+    (await geocodeWithGoogle(sourceLocation, options)) ??
+    (await geocodeWithNominatim(sourceLocation, options));
+
+  return geocoded ?? parserCandidate;
+}
+
+async function buildLocationResolutionMap(candidates: string[]) {
+  const options = getGeocodeOptions();
+  const deduped = Array.from(new Set(candidates));
+  const resolved = new Map<string, string | null>();
+
+  // Keep external geocoding pressure low while still parallelizing enough for UX.
+  const maxWorkers = options.googleApiKey ? 3 : 2;
+  const queue = [...deduped];
+
+  async function worker() {
+    while (queue.length > 0) {
+      const sourceLocation = queue.shift();
+      if (!sourceLocation) return;
+
+      if (!isValidPlace(sourceLocation) || isAirport(sourceLocation)) {
+        resolved.set(sourceLocation, null);
+        continue;
+      }
+
+      const city = await resolveValidatedLocation(sourceLocation, options);
+      resolved.set(sourceLocation, city);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(maxWorkers, queue.length) }, () => worker());
+  await Promise.all(workers);
+  return resolved;
 }
 
 function mergeRangesAndCombineDetails(ranges: DayRange[]) {
@@ -273,14 +579,14 @@ function mergeRangesAndCombineDetails(ranges: DayRange[]) {
   let current: DayRange = {
     startDay: ranges[0].startDay,
     endDayExclusive: ranges[0].endDayExclusive,
-    details: [...ranges[0].details]
+    events: [...ranges[0].events]
   };
 
   for (let i = 1; i < ranges.length; i += 1) {
     const next = ranges[i];
     if (current.endDayExclusive >= next.startDay) {
       current.endDayExclusive = Math.max(current.endDayExclusive, next.endDayExclusive);
-      current.details.push(...next.details);
+      current.events.push(...next.events);
       continue;
     }
 
@@ -288,7 +594,7 @@ function mergeRangesAndCombineDetails(ranges: DayRange[]) {
     current = {
       startDay: next.startDay,
       endDayExclusive: next.endDayExclusive,
-      details: [...next.details]
+      events: [...next.events]
     };
   }
 
@@ -296,49 +602,48 @@ function mergeRangesAndCombineDetails(ranges: DayRange[]) {
   return merged;
 }
 
-function to12HourTime(date: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true
-  })
-    .format(date)
-    .replace(" ", "");
-}
-
 function addDayLocation(
-  dayMap: Record<string, Record<string, string[]>>,
+  dayMap: Record<string, Record<string, InferredEvent[]>>,
   dateKey: string,
   location: string,
-  details: string[]
+  events: InferredEvent[]
 ) {
   if (!dayMap[dateKey]) dayMap[dateKey] = {};
   if (!dayMap[dateKey][location]) dayMap[dateKey][location] = [];
-  dayMap[dateKey][location].push(...details);
+  dayMap[dateKey][location].push(...events);
 }
 
-export function buildMonthlyLocationRollup(
+export async function buildMonthlyLocationRollup(
   events: CalendarEventInput[],
   monthKey: string,
   timeZone: string
-): MonthlyRollup {
+): Promise<MonthlyRollup> {
   const locationMap: Record<string, Record<string, EventGroup[]>> = {};
   const multiDayAllDayByCity: Record<string, DayRange[]> = {};
+  const sourceLocations = Array.from(
+    new Set(
+      events
+        .map((event) => event.location?.trim().replace(/\s+/g, " "))
+        .filter((location): location is string => Boolean(location))
+    )
+  );
+  const locationResolutionMap = await buildLocationResolutionMap(sourceLocations);
 
   for (const event of events) {
     const sourceLocation = event.location?.trim().replace(/\s+/g, " ");
-    if (!sourceLocation || !isValidPlace(sourceLocation)) continue;
+    if (!sourceLocation) continue;
 
-    const cityStateCountry = getCityStateCountryFromLocation(sourceLocation);
-    if (!cityStateCountry || isAirport(sourceLocation)) continue;
+    const cityStateCountry = locationResolutionMap.get(sourceLocation) ?? null;
+    if (!cityStateCountry) continue;
 
-    const trimmedAddress = cityStateCountry || trimAddress(sourceLocation);
-    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(sourceLocation)}`;
-
-    const details = event.isAllDay
-      ? `All-Day Event: ${event.title} @ ${trimmedAddress} (${mapsUrl})`
-      : `${to12HourTime(event.start, timeZone)} - ${to12HourTime(event.end, timeZone)}: ${event.title} @ ${trimmedAddress} (${mapsUrl})`;
+    const inferredEvent: InferredEvent = {
+      title: event.title,
+      isAllDay: event.isAllDay,
+      startIso: event.start.toISOString(),
+      endIso: event.end.toISOString(),
+      inferredFrom: sourceLocation,
+      mapsUrl: `https://www.google.com/maps/search/${encodeURIComponent(sourceLocation)}`
+    };
 
     if (event.isAllDay && event.end > event.start && event.allDayStartKey && event.allDayEndKeyExclusive) {
       if (!multiDayAllDayByCity[cityStateCountry]) {
@@ -347,7 +652,7 @@ export function buildMonthlyLocationRollup(
       multiDayAllDayByCity[cityStateCountry].push({
         startDay: dateKeyToEpochDay(event.allDayStartKey),
         endDayExclusive: dateKeyToEpochDay(event.allDayEndKeyExclusive),
-        details: [details]
+        events: [inferredEvent]
       });
       continue;
     }
@@ -355,11 +660,11 @@ export function buildMonthlyLocationRollup(
     const dateKey = toDateKey(event.start, timeZone);
     if (!locationMap[dateKey]) locationMap[dateKey] = {};
     if (!locationMap[dateKey][cityStateCountry]) locationMap[dateKey][cityStateCountry] = [];
-    locationMap[dateKey][cityStateCountry].push({ start: event.start, details });
+    locationMap[dateKey][cityStateCountry].push({ start: event.start, event: inferredEvent });
   }
 
   const monthPrefix = toMonthPrefix(monthKey);
-  const days: Record<string, Record<string, string[]>> = {};
+  const days: Record<string, Record<string, InferredEvent[]>> = {};
 
   for (const [dateKey, locationGroups] of Object.entries(locationMap)) {
     if (!dateKey.startsWith(monthPrefix)) continue;
@@ -370,7 +675,7 @@ export function buildMonthlyLocationRollup(
         days,
         dateKey,
         cityStateCountry,
-        groupedEvents.map((item) => item.details)
+        groupedEvents.map((item) => item.event)
       );
     }
   }
@@ -382,7 +687,7 @@ export function buildMonthlyLocationRollup(
       for (let day = range.startDay; day < range.endDayExclusive; day += 1) {
         const dateKey = epochDayToDateKey(day);
         if (!dateKey.startsWith(monthPrefix)) continue;
-        addDayLocation(days, dateKey, cityStateCountry, range.details);
+        addDayLocation(days, dateKey, cityStateCountry, range.events);
       }
     }
   }
@@ -391,7 +696,12 @@ export function buildMonthlyLocationRollup(
 
   for (const [dateKey, groupedLocations] of Object.entries(days)) {
     normalizedDays[dateKey] = Object.entries(groupedLocations)
-      .map(([location, details]) => ({ location, details }))
+      .map(([location, cityEvents]) => ({
+        location,
+        events: cityEvents.sort(
+          (a, b) => new Date(a.startIso).getTime() - new Date(b.startIso).getTime()
+        )
+      }))
       .sort((a, b) => a.location.localeCompare(b.location));
   }
 

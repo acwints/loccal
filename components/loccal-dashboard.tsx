@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 
 import { MonthGrid } from "@/components/month-grid";
-import type { DayLocation } from "@/lib/loccal";
+import type { DayLocation, InferredEvent } from "@/lib/loccal";
 
 interface ApiResponse {
   month: string;
@@ -57,11 +57,7 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
         if (canceled) return;
         setData(result);
         setError(null);
-        setSelectedDateKey((current) => {
-          if (current && result.days[current]) return current;
-          const firstWithData = Object.keys(result.days).sort()[0];
-          return firstWithData ?? `${result.month}-01`;
-        });
+        setSelectedDateKey(null);
       })
       .catch((err: unknown) => {
         if (canceled) return;
@@ -96,6 +92,22 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
   const selectedDayLocations =
     data && selectedDateKey ? data.days[selectedDateKey] ?? [] : [];
 
+  function formatTime(iso: string, timeZone: string) {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    })
+      .format(new Date(iso))
+      .replace(" ", "");
+  }
+
+  function eventTimeLabel(event: InferredEvent, timeZone: string) {
+    if (event.isAllDay) return "All day";
+    return `${formatTime(event.startIso, timeZone)} - ${formatTime(event.endIso, timeZone)}`;
+  }
+
   return (
     <main className="dashboard-shell">
       <header className="hero">
@@ -125,34 +137,56 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
 
       {data ? (
         <>
-          <MonthGrid
-            monthKey={data.month}
-            days={data.days}
-            selectedDateKey={selectedDateKey}
-            onSelectDate={setSelectedDateKey}
-          />
-          {selectedDateKey ? (
-            <section className="day-detail-card">
-              <p className="eyebrow">Selected day</p>
-              <h2>{formatDateLabel(selectedDateKey)}</h2>
-              {selectedDayLocations.length === 0 ? (
-                <p>No city inferred for this date.</p>
-              ) : (
-                <div className="day-detail-list">
-                  {selectedDayLocations.map((entry) => (
-                    <article key={`${selectedDateKey}-${entry.location}`} className="day-detail-item">
-                      <h3>{entry.location}</h3>
-                      <ul>
-                        {entry.details.map((detail, detailIdx) => (
-                          <li key={`${entry.location}-${detailIdx}`}>{detail}</li>
-                        ))}
-                      </ul>
-                    </article>
-                  ))}
+          <div className="calendar-layout">
+            <MonthGrid
+              monthKey={data.month}
+              days={data.days}
+              selectedDateKey={selectedDateKey}
+              onSelectDate={(dateKey) =>
+                setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
+              }
+            />
+            {selectedDateKey ? (
+              <aside className="day-side-panel">
+                <div className="day-side-header">
+                  <p className="eyebrow">Selected day</p>
+                  <button
+                    type="button"
+                    className="ghost-btn close-panel-btn"
+                    onClick={() => setSelectedDateKey(null)}
+                  >
+                    Close
+                  </button>
                 </div>
-              )}
-            </section>
-          ) : null}
+                <h2>{formatDateLabel(selectedDateKey)}</h2>
+                {selectedDayLocations.length === 0 ? (
+                  <p>No city inferred for this date.</p>
+                ) : (
+                  <div className="day-detail-list">
+                    {selectedDayLocations.map((entry) => (
+                      <article key={`${selectedDateKey}-${entry.location}`} className="day-detail-item">
+                        <h3>{entry.location}</h3>
+                        <ul>
+                          {entry.events.map((event, eventIdx) => (
+                            <li key={`${entry.location}-${event.title}-${eventIdx}`}>
+                              <strong>{eventTimeLabel(event, data.timeZone)}</strong>: {event.title}
+                              <br />
+                              <span className="event-evidence">
+                                inferred from{" "}
+                                <a href={event.mapsUrl} target="_blank" rel="noreferrer">
+                                  {event.inferredFrom}
+                                </a>
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </aside>
+            ) : null}
+          </div>
           <p className="meta">
             Source timezone: <strong>{data.timeZone}</strong> · Generated by {data.generatedBy} ·
             Updated {new Date(data.generatedAt).toLocaleString()}
