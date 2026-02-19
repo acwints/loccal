@@ -148,7 +148,10 @@ const NON_LOCATION_WORDS = new Set([
   "reading",
   "watch",
   "submit",
-  "upload"
+  "upload",
+  "settings",
+  "holiday",
+  "holidays"
 ]);
 
 const DISALLOWED_CITY_WORDS = new Set([
@@ -278,6 +281,7 @@ function isValidPlace(location?: string | null) {
   const normalized = location.trim();
   if (normalized.length < 3) return false;
   if (normalized.length > 140) return false;
+  if (/[<>]/.test(normalized)) return false;
   if (/[\n\r\t]/.test(normalized)) return false;
   if (/[:;!?]/.test(normalized)) return false;
   if (/^https?:\/\//i.test(normalized)) return false;
@@ -698,9 +702,14 @@ export async function buildMonthlyLocationRollup(
     normalizedDays[dateKey] = Object.entries(groupedLocations)
       .map(([location, cityEvents]) => ({
         location,
-        events: cityEvents.sort(
-          (a, b) => new Date(a.startIso).getTime() - new Date(b.startIso).getTime()
-        )
+        events: Array.from(
+          new Map(
+            cityEvents.map((event) => [
+              `${event.title}|${event.startIso}|${event.endIso}|${event.inferredFrom}`,
+              event
+            ])
+          ).values()
+        ).sort((a, b) => new Date(a.startIso).getTime() - new Date(b.startIso).getTime())
       }))
       .sort((a, b) => a.location.localeCompare(b.location));
   }

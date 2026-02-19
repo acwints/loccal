@@ -132,15 +132,8 @@ p {
 }
 
 .month-grid-wrap {
-  overflow: hidden;
-}
-
-.calendar-layout {
   margin-top: 1rem;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 1rem;
-  align-items: start;
+  overflow: hidden;
 }
 
 .weekdays,
@@ -232,14 +225,31 @@ p {
   color: #516257;
 }
 
+.day-rail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  border: none;
+  background: rgba(19, 33, 20, 0.35);
+  padding: 0;
+  cursor: pointer;
+}
+
 .day-side-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: min(420px, 96vw);
+  overflow-y: auto;
+  z-index: 80;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-right: none;
+  border-top-left-radius: 18px;
+  border-bottom-left-radius: 18px;
   background: linear-gradient(145deg, var(--card), #f7f1df);
   box-shadow: 0 14px 48px rgba(19, 33, 20, 0.1);
-  padding: 1rem 1.1rem;
-  position: sticky;
-  top: 1rem;
+  padding: 1rem 1rem 1.25rem;
 }
 
 .day-side-header {
@@ -302,14 +312,6 @@ p {
 }
 
 @media (max-width: 960px) {
-  .calendar-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .day-side-panel {
-    position: static;
-  }
-
   .day-cell,
   .day-button {
     min-height: 102px;
@@ -345,5 +347,12 @@ p {
 
   .day-cell.empty {
     display: none;
+  }
+
+  .day-side-panel {
+    width: 100vw;
+    border-radius: 0;
+    border-left: none;
+    border-top: none;
   }
 }
