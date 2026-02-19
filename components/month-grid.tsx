@@ -1,8 +1,14 @@
 import type { DayLocation } from "@/lib/loccal";
+import {
+  getCityTheme,
+  toCityStateLabel,
+  type LoccalSettings
+} from "@/lib/user-settings";
 
 interface MonthGridProps {
   monthKey: string;
   days: Record<string, DayLocation[]>;
+  settings: LoccalSettings;
   selectedDateKey?: string | null;
   onSelectDate?: (dateKey: string) => void;
 }
@@ -19,13 +25,14 @@ function getMonthMeta(monthKey: string) {
   };
 }
 
-export function MonthGrid({ monthKey, days, selectedDateKey, onSelectDate }: MonthGridProps) {
+export function MonthGrid({
+  monthKey,
+  days,
+  settings,
+  selectedDateKey,
+  onSelectDate
+}: MonthGridProps) {
   const { firstWeekday, daysInMonth } = getMonthMeta(monthKey);
-
-  function toCityOnlyLabel(location: string) {
-    const [city] = location.split(",");
-    return city?.trim() || location;
-  }
 
   return (
     <div className="month-grid-wrap">
@@ -44,9 +51,18 @@ export function MonthGrid({ monthKey, days, selectedDateKey, onSelectDate }: Mon
           const day = idx + 1;
           const dateKey = `${monthKey}-${String(day).padStart(2, "0")}`;
           const dayLocations = days[dateKey] ?? [];
-          const cityLabels = Array.from(
-            new Set(dayLocations.map((entry) => toCityOnlyLabel(entry.location)))
+          const inferredCityStateLabels = Array.from(
+            new Set(dayLocations.map((entry) => toCityStateLabel(entry.location)))
           );
+          const hasHomeFallback = inferredCityStateLabels.length === 0 && Boolean(settings.homeLocation);
+          const displayLabels =
+            inferredCityStateLabels.length > 0
+              ? inferredCityStateLabels
+              : hasHomeFallback
+                ? [toCityStateLabel(settings.homeLocation)]
+                : [];
+          const primaryLabel = displayLabels[0] ?? "";
+          const theme = getCityTheme(primaryLabel, settings, hasHomeFallback);
           const isSelected = dateKey === selectedDateKey;
 
           return (
@@ -56,20 +72,28 @@ export function MonthGrid({ monthKey, days, selectedDateKey, onSelectDate }: Mon
                 className="day-button"
                 aria-pressed={isSelected}
                 onClick={() => onSelectDate?.(dateKey)}
+                style={{
+                  background: theme.background,
+                  color: theme.textColor
+                }}
               >
-                <div className="day-label">{day}</div>
-                {cityLabels.length === 0 ? (
+                <div className="day-cell-head">
+                  <div className="day-label">{day}</div>
+                  {theme.icon ? <span className="day-icon">{theme.icon}</span> : null}
+                </div>
+                {displayLabels.length === 0 ? (
                   <p className="none-label">No city inferred</p>
                 ) : (
                   <div className="city-list">
-                    {cityLabels.slice(0, 3).map((cityLabel) => (
+                    {displayLabels.slice(0, 3).map((cityLabel) => (
                       <span key={`${dateKey}-${cityLabel}`} className="city-pill">
                         {cityLabel}
                       </span>
                     ))}
-                    {cityLabels.length > 3 ? (
-                      <p className="extra">+{cityLabels.length - 3} more</p>
+                    {displayLabels.length > 3 ? (
+                      <p className="extra">+{displayLabels.length - 3} more</p>
                     ) : null}
+                    {hasHomeFallback ? <p className="home-note">Home default</p> : null}
                   </div>
                 )}
               </button>

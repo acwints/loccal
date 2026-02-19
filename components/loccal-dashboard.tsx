@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { signOut } from "next-auth/react";
 
 import { MonthGrid } from "@/components/month-grid";
 import type { DayLocation, InferredEvent } from "@/lib/loccal";
+import { useLoccalSettings } from "@/lib/use-loccal-settings";
+import { toCityStateLabel } from "@/lib/user-settings";
 
 interface ApiResponse {
   month: string;
@@ -47,6 +48,7 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { ready: settingsReady, settings } = useLoccalSettings();
 
   useEffect(() => {
     let canceled = false;
@@ -91,6 +93,10 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
 
   const selectedDayLocations =
     data && selectedDateKey ? data.days[selectedDateKey] ?? [] : [];
+  const selectedHomeFallback =
+    selectedDateKey && selectedDayLocations.length === 0 && settings.homeLocation
+      ? toCityStateLabel(settings.homeLocation)
+      : null;
 
   function formatTime(iso: string, timeZone: string) {
     return new Intl.DateTimeFormat("en-US", {
@@ -126,13 +132,11 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
           <button type="button" className="ghost-btn" onClick={() => goToMonth(1)}>
             Next
           </button>
-          <button type="button" className="primary-btn" onClick={() => signOut()}>
-            Sign out
-          </button>
         </div>
       </header>
 
       {loading ? <p className="status">Loading month...</p> : null}
+      {!settingsReady ? <p className="status">Loading settings…</p> : null}
       {error ? <p className="error">{error}</p> : null}
 
       {data ? (
@@ -140,12 +144,20 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
           <MonthGrid
             monthKey={data.month}
             days={data.days}
+            settings={settings}
             selectedDateKey={selectedDateKey}
             onSelectDate={(dateKey) =>
               setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
             }
           />
-          {selectedDateKey ? <button type="button" className="day-rail-backdrop" onClick={() => setSelectedDateKey(null)} aria-label="Close selected day panel" /> : null}
+          {selectedDateKey ? (
+            <button
+              type="button"
+              className="day-rail-backdrop"
+              onClick={() => setSelectedDateKey(null)}
+              aria-label="Close selected day panel"
+            />
+          ) : null}
           {selectedDateKey ? (
             <aside className="day-side-panel" role="dialog" aria-modal="true">
               <div className="day-side-header">
@@ -159,13 +171,19 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
                 </button>
               </div>
               <h2>{formatDateLabel(selectedDateKey)}</h2>
-              {selectedDayLocations.length === 0 ? (
+              {selectedDayLocations.length === 0 && selectedHomeFallback ? (
+                <article className="day-detail-item">
+                  <h3>{selectedHomeFallback}</h3>
+                  <p className="settings-help">Home default used for this day (no inferred travel).</p>
+                </article>
+              ) : null}
+              {selectedDayLocations.length === 0 && !selectedHomeFallback ? (
                 <p>No city inferred for this date.</p>
               ) : (
                 <div className="day-detail-list">
                   {selectedDayLocations.map((entry) => (
                     <article key={`${selectedDateKey}-${entry.location}`} className="day-detail-item">
-                      <h3>{entry.location}</h3>
+                      <h3>{toCityStateLabel(entry.location)}</h3>
                       <ul>
                         {entry.events.map((event, eventIdx) => (
                           <li key={`${entry.location}-${event.title}-${eventIdx}`}>
