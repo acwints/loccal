@@ -1347,3 +1347,202 @@ h2 {
     display: none;
   }
 }
+
+/* Classic rich theme redesign */
+:root {
+  --bg: #f2eee7;
+  --ink: #1f2633;
+  --muted: #5f6675;
+  --card: #fcfaf6;
+  --line: #d4cbbf;
+  --accent: #2f4f7c;
+  --danger: #a43932;
+  --surface-1: #fcfaf6;
+  --surface-2: #f3ece1;
+  --surface-3: #ebe3d5;
+  --shadow-soft: 0 1px 2px rgba(31, 38, 51, 0.08), 0 10px 28px rgba(31, 38, 51, 0.08);
+}
+
+:root[data-theme="dark"] {
+  --bg: #141a24;
+  --ink: #eef2f8;
+  --muted: #a8b0c1;
+  --card: #1a2230;
+  --line: #2d3647;
+  --accent: #8baee8;
+  --danger: #f58072;
+  --surface-1: #1a2230;
+  --surface-2: #202b3b;
+  --surface-3: #263347;
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.36), 0 12px 28px rgba(0, 0, 0, 0.38);
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 12%, rgba(76, 101, 138, 0.14), transparent 34%),
+    radial-gradient(circle at 88% 5%, rgba(146, 112, 64, 0.1), transparent 26%),
+    var(--bg);
+  color: var(--ink);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ink);
+}
+
+p,
+.meta,
+.status,
+.settings-help {
+  color: var(--muted);
+}
+
+.topbar {
+  background: color-mix(in srgb, var(--surface-1) 82%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+}
+
+.topbar-inner {
+  grid-template-columns: auto 1fr auto;
+}
+
+.topbar-actions {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.theme-toggle-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+
+.theme-toggle-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  outline-offset: 1px;
+}
+
+.brand-text {
+  color: var(--ink);
+}
+
+.topbar-nav-link {
+  color: color-mix(in srgb, var(--ink) 82%, var(--muted));
+}
+
+.topbar-nav-link.active {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+  color: var(--ink);
+}
+
+.avatar-btn {
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.avatar-menu {
+  border-color: var(--line);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-soft);
+}
+
+.avatar-menu-link,
+.avatar-menu-signout {
+  color: var(--ink);
+}
+
+.avatar-menu-link:hover,
+.avatar-menu-signout:hover {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+.primary-btn {
+  background: var(--accent);
+  color: #fff;
+}
+
+.primary-btn:hover {
+  background: color-mix(in srgb, var(--accent) 88%, #000 12%);
+}
+
+.ghost-btn {
+  color: var(--ink);
+  border-color: var(--line);
+  background: var(--surface-1);
+}
+
+.ghost-btn:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.login-card,
+.hero,
+.month-grid-wrap,
+.marketing-hero,
+.marketing-card,
+.settings-card,
+.dashboard-insight-card,
+.year-graph-card,
+.friends-hero,
+.friends-card,
+.friends-metric-card,
+.settings-hero,
+.theme-preview-card,
+.snapshot-card,
+.day-side-panel {
+  border-color: var(--line);
+  background: linear-gradient(165deg, var(--surface-1), var(--surface-2));
+  box-shadow: var(--shadow-soft);
+}
+
+.weekday-cell {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.day-cell {
+  background: var(--surface-1);
+  border-right-color: var(--line);
+  border-bottom-color: var(--line);
+}
+
+.day-cell.other-month {
+  background: color-mix(in srgb, var(--surface-2) 85%, var(--surface-1));
+}
+
+.city-pill {
+  border-color: color-mix(in srgb, var(--line) 80%, var(--ink));
+  background: color-mix(in srgb, var(--surface-1) 82%, transparent);
+}
+
+.year-graph-months span,
+.home-note,
+.extra,
+.none-label,
+.overlap-note {
+  color: var(--muted);
+}
+
+.year-graph-cell {
+  border-color: color-mix(in srgb, var(--line) 76%, var(--ink));
+}
