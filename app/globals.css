@@ -659,6 +659,13 @@ h2 {
 
 .social-search-row {
   display: grid;
+  gap: 0.35rem;
+}
+
+.social-search-label {
+  font-size: 0.78rem;
+  color: #4a5c52;
+  font-weight: 600;
 }
 
 .social-list {

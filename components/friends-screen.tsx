@@ -234,8 +234,9 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
           <p className="eyebrow">Network</p>
           <h1>Friends</h1>
           <p>
-            {userName ? `${userName}, m` : "M"}anage requests, discover people, and tune who can view
-            your travel overlap graph.
+            {userName
+              ? `${userName}, manage requests, discover people, and tune who can view your travel overlap graph.`
+              : "Manage requests, discover people, and tune who can view your travel overlap graph."}
           </p>
         </div>
         <div className="friends-hero-actions">
@@ -285,7 +286,11 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
           </div>
 
           <div className="social-search-row">
+            <label htmlFor="friends-search" className="social-search-label">
+              Search users
+            </label>
             <input
+              id="friends-search"
               className="settings-input"
               placeholder="Start typing a name or email"
               value={searchQuery}
