@@ -85,6 +85,7 @@ async function fetchYear(year: string) {
 
 export function LoccalDashboard({ userName }: { userName?: string | null }) {
   const [month, setMonth] = useState(() => toMonthKey(new Date()));
+  const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
   const [data, setData] = useState<ApiResponse | null>(null);
   const [friendMonth, setFriendMonth] = useState<FriendMonthResponse | null>(null);
   const [friendMonthError, setFriendMonthError] = useState<string | null>(null);
@@ -261,6 +262,33 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
         </div>
       </header>
 
+      <div className="dashboard-view-toggle" role="tablist" aria-label="Calendar view">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={viewMode === "monthly"}
+          className={`dashboard-view-toggle-btn${viewMode === "monthly" ? " active" : ""}`}
+          onClick={() => {
+            setViewMode("monthly");
+            setSelectedDateKey(null);
+          }}
+        >
+          Monthly
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={viewMode === "yearly"}
+          className={`dashboard-view-toggle-btn${viewMode === "yearly" ? " active" : ""}`}
+          onClick={() => {
+            setViewMode("yearly");
+            setSelectedDateKey(null);
+          }}
+        >
+          Full Year
+        </button>
+      </div>
+
       <section className="dashboard-insights">
         <article className="dashboard-insight-card">
           <p className="eyebrow">Networked overlaps</p>
@@ -289,17 +317,19 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
 
       {data ? (
         <>
-          <MonthGrid
-            monthKey={data.month}
-            days={data.days}
-            settings={settings}
-            overlaps={friendMonth?.overlaps}
-            selectedDateKey={selectedDateKey}
-            onSelectDate={(dateKey) =>
-              setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
-            }
-          />
-          {yearData ? (
+          {viewMode === "monthly" ? (
+            <MonthGrid
+              monthKey={data.month}
+              days={data.days}
+              settings={settings}
+              overlaps={friendMonth?.overlaps}
+              selectedDateKey={selectedDateKey}
+              onSelectDate={(dateKey) =>
+                setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
+              }
+            />
+          ) : null}
+          {viewMode === "yearly" && yearData ? (
             <YearContributionGraph
               year={Number(yearData.year)}
               days={yearData.days}
