@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 
-import { getAuthOptions } from "@/lib/auth";
 import { fetchEventsFromAllCalendars } from "@/lib/google-calendar";
 import { buildMonthlyLocationRollup } from "@/lib/loccal";
+import { requireSessionUser } from "@/lib/session-user";
+import { saveMonthlySnapshot } from "@/lib/social-store";
 
 export const runtime = "nodejs";
 
@@ -18,9 +18,9 @@ function normalizeMonth(month?: string | null) {
 }
 
 export async function GET(request: Request) {
-  const session = await getServerSession(getAuthOptions());
+  const { session, user } = await requireSessionUser();
 
-  if (!session?.accessToken) {
+  if (!session || !user || !session.accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -44,12 +44,28 @@ export async function GET(request: Request) {
   try {
     const { events, timeZone } = await fetchEventsFromAllCalendars(session.accessToken, start, end);
     const rollup = await buildMonthlyLocationRollup(events, month, timeZone);
+    const generatedAt = new Date().toISOString();
+    let socialSnapshotSaved = true;
+
+    try {
+      await saveMonthlySnapshot({
+        userId: user.id,
+        month: rollup.month,
+        days: rollup.days,
+        timeZone,
+        generatedAt
+      });
+    } catch (socialError) {
+      socialSnapshotSaved = false;
+      console.error("Failed to persist social monthly snapshot", socialError);
+    }
 
     return NextResponse.json({
       ...rollup,
       timeZone,
-      generatedAt: new Date().toISOString(),
-      generatedBy: "@Loccal"
+      generatedAt,
+      generatedBy: "@Loccal",
+      socialSnapshotSaved
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

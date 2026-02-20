@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CitySearchInput } from "@/components/city-search-input";
 import { EmojiPicker } from "@/components/emoji-picker";
@@ -25,6 +25,11 @@ function titleCaseKey(normalized: string) {
     .join(", ");
 }
 
+interface SocialPreferencesResponse {
+  shareMode: "friends" | "private";
+  lastSharedAt: string | null;
+}
+
 export function SettingsScreen() {
   const { ready, settings, setHomeLocation, upsertCityTheme, removeCityTheme, resetAll } =
     useLoccalSettings();
@@ -32,11 +37,52 @@ export function SettingsScreen() {
   const [iconInput, setIconInput] = useState("📍");
   const [backgroundInput, setBackgroundInput] = useState("linear-gradient(145deg, #f7f2e4, #ece4d1)");
   const [textColorInput, setTextColorInput] = useState("#1d3a27");
+  const [socialPrefs, setSocialPrefs] = useState<SocialPreferencesResponse | null>(null);
+  const [socialLoading, setSocialLoading] = useState(true);
+  const [socialSaving, setSocialSaving] = useState(false);
+  const [socialError, setSocialError] = useState<string | null>(null);
 
   const sortedOverrides = useMemo(
     () => Object.entries(settings.cityThemeOverrides).sort(([a], [b]) => a.localeCompare(b)),
     [settings.cityThemeOverrides]
   );
+
+  useEffect(() => {
+    let canceled = false;
+    setSocialLoading(true);
+    setSocialError(null);
+
+    fetch("/api/social/preferences", { cache: "no-store" })
+      .then(async (response) => {
+        const payload = (await response.json().catch(() => null)) as
+          | SocialPreferencesResponse
+          | { error?: string }
+          | null;
+
+        if (!response.ok) {
+          const message =
+            payload && typeof payload === "object" && "error" in payload && payload.error
+              ? payload.error
+              : "Failed to load social preferences.";
+          throw new Error(message);
+        }
+
+        if (!canceled) {
+          setSocialPrefs(payload as SocialPreferencesResponse);
+        }
+      })
+      .catch((error: unknown) => {
+        if (canceled) return;
+        setSocialError(error instanceof Error ? error.message : "Failed to load social preferences.");
+      })
+      .finally(() => {
+        if (!canceled) setSocialLoading(false);
+      });
+
+    return () => {
+      canceled = true;
+    };
+  }, []);
 
   function saveOverride() {
     const normalized = normalizeCityKey(toCityStateLabel(cityLabelInput));
@@ -49,6 +95,42 @@ export function SettingsScreen() {
     });
 
     setCityLabelInput("");
+  }
+
+  async function updateShareMode(shareMode: "friends" | "private") {
+    if (!socialPrefs || socialSaving || socialPrefs.shareMode === shareMode) return;
+
+    setSocialSaving(true);
+    setSocialError(null);
+
+    try {
+      const response = await fetch("/api/social/preferences", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ shareMode })
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | SocialPreferencesResponse
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        const message =
+          payload && typeof payload === "object" && "error" in payload && payload.error
+            ? payload.error
+            : "Failed to update sharing settings.";
+        throw new Error(message);
+      }
+
+      setSocialPrefs(payload as SocialPreferencesResponse);
+    } catch (error) {
+      setSocialError(error instanceof Error ? error.message : "Failed to update sharing settings.");
+    } finally {
+      setSocialSaving(false);
+    }
   }
 
   return (
@@ -74,6 +156,43 @@ export function SettingsScreen() {
             placeholder="San Francisco, CA"
           />
         </div>
+      </section>
+
+      <section className="settings-card">
+        <h2>Schedule Sharing</h2>
+        <p className="settings-help">
+          Control whether friends can view your saved travel snapshots and overlap dates.
+        </p>
+        {socialLoading ? <p className="status">Loading sharing preferences…</p> : null}
+        {socialError ? <p className="error">{socialError}</p> : null}
+        {socialPrefs ? (
+          <>
+            <div className="share-mode-row">
+              <button
+                type="button"
+                className={`ghost-btn share-mode-btn${socialPrefs.shareMode === "friends" ? " active" : ""}`}
+                onClick={() => updateShareMode("friends")}
+                disabled={socialSaving}
+              >
+                Friends can view
+              </button>
+              <button
+                type="button"
+                className={`ghost-btn share-mode-btn${socialPrefs.shareMode === "private" ? " active" : ""}`}
+                onClick={() => updateShareMode("private")}
+                disabled={socialSaving}
+              >
+                Private
+              </button>
+            </div>
+            <p className="settings-help">
+              Last shared snapshot:{" "}
+              {socialPrefs.lastSharedAt
+                ? new Date(socialPrefs.lastSharedAt).toLocaleString()
+                : "never"}
+            </p>
+          </>
+        ) : null}
       </section>
 
       <section className="settings-card">

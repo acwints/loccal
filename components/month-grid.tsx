@@ -9,6 +9,14 @@ interface MonthGridProps {
   monthKey: string;
   days: Record<string, DayLocation[]>;
   settings: LoccalSettings;
+  overlaps?: Record<
+    string,
+    {
+      friendIds: string[];
+      friendNames: string[];
+      cities: string[];
+    }
+  >;
   selectedDateKey?: string | null;
   onSelectDate?: (dateKey: string) => void;
 }
@@ -29,6 +37,7 @@ export function MonthGrid({
   monthKey,
   days,
   settings,
+  overlaps,
   selectedDateKey,
   onSelectDate
 }: MonthGridProps) {
@@ -64,9 +73,14 @@ export function MonthGrid({
           const primaryLabel = displayLabels[0] ?? "";
           const theme = getCityTheme(primaryLabel, settings, hasHomeFallback);
           const isSelected = dateKey === selectedDateKey;
+          const overlap = overlaps?.[dateKey];
+          const hasOverlap = Boolean(overlap);
 
           return (
-            <article key={dateKey} className={`day-cell${isSelected ? " selected" : ""}`}>
+            <article
+              key={dateKey}
+              className={`day-cell${isSelected ? " selected" : ""}${hasOverlap ? " overlap" : ""}`}
+            >
               <button
                 type="button"
                 className="day-button"
@@ -79,7 +93,10 @@ export function MonthGrid({
               >
                 <div className="day-cell-head">
                   <div className="day-label">{day}</div>
-                  {theme.icon ? <span className="day-icon">{theme.icon}</span> : null}
+                  <div className="day-icon-stack">
+                    {hasOverlap ? <span className="day-overlap-icon">👥</span> : null}
+                    {theme.icon ? <span className="day-icon">{theme.icon}</span> : null}
+                  </div>
                 </div>
                 {displayLabels.length === 0 ? (
                   <p className="none-label">&nbsp;</p>
@@ -96,6 +113,12 @@ export function MonthGrid({
                     {hasHomeFallback ? <p className="home-note">Home default</p> : null}
                   </div>
                 )}
+                {hasOverlap ? (
+                  <p className="overlap-note">
+                    Match with {overlap?.friendNames.length ?? 0} friend
+                    {(overlap?.friendNames.length ?? 0) === 1 ? "" : "s"}
+                  </p>
+                ) : null}
               </button>
             </article>
           );

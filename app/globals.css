@@ -366,6 +366,10 @@ h2 {
   outline-offset: -2px;
 }
 
+.day-cell.overlap {
+  box-shadow: inset 0 0 0 2px rgba(31, 107, 62, 0.26);
+}
+
 .day-cell.empty {
   background: #f8f5ea;
 }
@@ -401,6 +405,16 @@ h2 {
   font-size: 1rem;
 }
 
+.day-icon-stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.day-overlap-icon {
+  font-size: 0.78rem;
+}
+
 .none-label {
   margin-top: 0.45rem;
   font-size: 0.78rem;
@@ -429,6 +443,14 @@ h2 {
   font-size: 0.72rem;
   font-weight: 600;
   color: rgba(38, 65, 47, 0.74);
+}
+
+.overlap-note {
+  margin-top: 0.4rem;
+  margin-bottom: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #184b2a;
 }
 
 .day-rail-backdrop {
@@ -502,6 +524,32 @@ h2 {
   margin-bottom: 0.45rem;
 }
 
+.overlap-detail-item {
+  border-color: rgba(31, 107, 62, 0.32);
+  background: rgba(232, 247, 236, 0.58);
+}
+
+.friend-day-section {
+  margin-top: 0.9rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.friend-day-section h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #163f22;
+}
+
+.friend-stale-tag {
+  margin-left: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7b2e2e;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .event-evidence {
   color: #5b6a61;
   font-size: 0.76rem;
@@ -514,6 +562,111 @@ h2 {
 .settings-shell {
   display: grid;
   gap: 1rem;
+}
+
+.social-layout {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.social-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(145deg, var(--card), #f7f1df);
+  box-shadow: 0 14px 48px rgba(19, 33, 20, 0.1);
+  padding: 0.95rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.social-search-row {
+  display: grid;
+}
+
+.social-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.social-item {
+  border: 1px solid #d5cebc;
+  border-radius: 12px;
+  background: #fffef8;
+  padding: 0.55rem 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.social-item-static {
+  justify-content: flex-start;
+}
+
+.social-item-stack {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.social-person {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.social-avatar,
+.social-avatar-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.social-avatar {
+  object-fit: cover;
+}
+
+.social-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c8c1af;
+  background: #f8f2df;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #1f3d2a;
+}
+
+.social-name {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #203525;
+}
+
+.social-meta {
+  margin: 0.05rem 0 0;
+  font-size: 0.76rem;
+}
+
+.social-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.social-btn {
+  padding: 0.36rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.social-btn-danger {
+  color: #7b2e2e;
 }
 
 .settings-hero {
@@ -538,6 +691,18 @@ h2 {
   display: flex;
   gap: 0.6rem;
   align-items: center;
+}
+
+.share-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.share-mode-btn.active {
+  border-color: #9ec7a7;
+  background: rgba(15, 143, 73, 0.1);
+  color: #1c4c2b;
 }
 
 .settings-grid {
@@ -823,6 +988,10 @@ h2 {
     gap: 0.6rem;
   }
 
+  .social-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .default-theme-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -855,6 +1024,10 @@ h2 {
   }
 
   .marketing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .social-layout {
     grid-template-columns: 1fr;
   }
 

@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SocialShareMode {
+  FRIENDS
+  PRIVATE
+}
+
+enum SocialFollowRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+model SocialUser {
+  id           String          @id
+  email        String          @unique
+  name         String
+  avatarUrl    String?         @map("avatar_url")
+  shareMode    SocialShareMode @default(FRIENDS) @map("share_mode")
+  lastSharedAt DateTime?       @map("last_shared_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  followRequestsOut SocialFollowRequest[] @relation("social_request_requester")
+  followRequestsIn  SocialFollowRequest[] @relation("social_request_target")
+  following         SocialFollow[]        @relation("social_follower")
+  followers         SocialFollow[]        @relation("social_followee")
+  monthlySnapshots  SocialMonthlySnapshot[]
+
+  @@map("social_users")
+}
+
+model SocialFollowRequest {
+  id          String                    @id @default(cuid())
+  requesterId String                    @map("requester_id")
+  targetId    String                    @map("target_id")
+  status      SocialFollowRequestStatus @default(PENDING)
+  createdAt   DateTime                  @default(now()) @map("created_at")
+  updatedAt   DateTime                  @updatedAt @map("updated_at")
+
+  requester SocialUser @relation("social_request_requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  target    SocialUser @relation("social_request_target", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, targetId])
+  @@index([targetId, status, createdAt])
+  @@index([requesterId, status, createdAt])
+  @@map("social_follow_requests")
+}
+
+model SocialFollow {
+  id         String   @id @default(cuid())
+  followerId String   @map("follower_id")
+  followeeId String   @map("followee_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  follower SocialUser @relation("social_follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followee SocialUser @relation("social_followee", fields: [followeeId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followeeId])
+  @@index([followeeId, followerId])
+  @@map("social_follows")
+}
+
+model SocialMonthlySnapshot {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  month       String
+  timeZone    String   @map("time_zone")
+  generatedAt DateTime @map("generated_at")
+  days        Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user SocialUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+  @@index([month, generatedAt])
+  @@index([userId, generatedAt])
+  @@map("social_monthly_snapshots")
+}
