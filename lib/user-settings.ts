@@ -96,16 +96,18 @@ export function getCityTheme(
   settings: LoccalSettings,
   isHomeFallback = false
 ): Required<CityTheme> {
-  if (isHomeFallback) {
-    return {
-      ...HOME_THEME,
-      ...settings.cityThemeOverrides.home
-    };
-  }
-
   const normalized = normalizeCityKey(cityLabel);
   const defaultTheme = DEFAULT_CITY_THEMES[normalized];
   const override = settings.cityThemeOverrides[normalized];
+
+  if (isHomeFallback) {
+    return {
+      ...HOME_THEME,
+      ...settings.cityThemeOverrides.home,
+      // When home is set to a known city, use that city's icon.
+      icon: override?.icon ?? defaultTheme?.icon ?? settings.cityThemeOverrides.home?.icon ?? HOME_THEME.icon
+    };
+  }
 
   return {
     icon: override?.icon ?? defaultTheme?.icon ?? "📍",

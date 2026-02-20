@@ -24,25 +24,27 @@ function toDateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function startOfWeekSunday(date: Date) {
+function startOfWeekMonday(date: Date) {
   const result = new Date(date);
   result.setHours(0, 0, 0, 0);
-  result.setDate(result.getDate() - result.getDay());
+  const mondayIndex = (result.getDay() + 6) % 7;
+  result.setDate(result.getDate() - mondayIndex);
   return result;
 }
 
-function endOfWeekSaturday(date: Date) {
+function endOfWeekSunday(date: Date) {
   const result = new Date(date);
   result.setHours(0, 0, 0, 0);
-  result.setDate(result.getDate() + (6 - result.getDay()));
+  const mondayIndex = (result.getDay() + 6) % 7;
+  result.setDate(result.getDate() + (6 - mondayIndex));
   return result;
 }
 
 function buildCellsForYear(year: number) {
   const jan1 = new Date(year, 0, 1);
   const dec31 = new Date(year, 11, 31);
-  const start = startOfWeekSunday(jan1);
-  const end = endOfWeekSaturday(dec31);
+  const start = startOfWeekMonday(jan1);
+  const end = endOfWeekSunday(dec31);
 
   const cells: ContributionCell[] = [];
   const cursor = new Date(start);
@@ -99,53 +101,60 @@ export function YearContributionGraph({
             </span>
           ))}
         </div>
-        <div className="year-graph-grid" role="grid" aria-label={`Location graph for ${year}`}>
-          {weekColumns.map((week, weekIndex) => (
-            <div key={`week-${weekIndex}`} className="year-graph-week" role="rowgroup">
-              {week.map((cell) => {
-                const dayLocations = cell.inYear ? days[cell.dateKey] ?? [] : [];
-                const hasHomeFallback = cell.inYear && dayLocations.length === 0 && Boolean(settings.homeLocation);
-                const locationLabel = dayLocations[0]
-                  ? toCityStateLabel(dayLocations[0].location)
-                  : hasHomeFallback
-                    ? toCityStateLabel(settings.homeLocation)
+        <div className="year-graph-body">
+          <div className="year-graph-axis" aria-hidden="true">
+            <span className="year-graph-axis-mon">Mon</span>
+            <span className="year-graph-axis-sun">Sun</span>
+          </div>
+          <div className="year-graph-grid" role="grid" aria-label={`Location graph for ${year}`}>
+            {weekColumns.map((week, weekIndex) => (
+              <div key={`week-${weekIndex}`} className="year-graph-week" role="rowgroup">
+                {week.map((cell) => {
+                  const dayLocations = cell.inYear ? days[cell.dateKey] ?? [] : [];
+                  const hasHomeFallback = cell.inYear && dayLocations.length === 0 && Boolean(settings.homeLocation);
+                  const locationLabel = dayLocations[0]
+                    ? toCityStateLabel(dayLocations[0].location)
+                    : hasHomeFallback
+                      ? toCityStateLabel(settings.homeLocation)
+                      : "";
+                  const theme = locationLabel
+                    ? getCityTheme(locationLabel, settings, hasHomeFallback)
+                    : { background: "#eef2f6", textColor: "#98a2b3", icon: "" };
+                  const isSelected = selectedDateKey === cell.dateKey;
+                  const dateLabel = cell.date.toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric"
+                  });
+                  const tooltip = cell.inYear
+                    ? locationLabel
+                      ? `${dateLabel}: ${locationLabel}`
+                      : `${dateLabel}: no location`
                     : "";
-                const theme = locationLabel
-                  ? getCityTheme(locationLabel, settings, hasHomeFallback)
-                  : { background: "#eef2f6", textColor: "#98a2b3", icon: "" };
-                const isSelected = selectedDateKey === cell.dateKey;
-                const dateLabel = cell.date.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric"
-                });
-                const tooltip = cell.inYear
-                  ? locationLabel
-                    ? `${dateLabel}: ${locationLabel}`
-                    : `${dateLabel}: no location`
-                  : "";
 
-                return (
-                  <button
-                    key={cell.dateKey}
-                    type="button"
-                    className={`year-graph-cell${isSelected ? " selected" : ""}${cell.inYear ? "" : " out"}`}
-                    style={cell.inYear ? { background: theme.background, color: theme.textColor } : undefined}
-                    aria-label={tooltip || "Out of year range"}
-                    title={tooltip}
-                    onClick={() => {
-                      if (cell.inYear) onSelectDate?.(cell.dateKey);
-                    }}
-                    disabled={!cell.inYear}
-                    role="gridcell"
-                  >
-                    <span aria-hidden="true">{locationLabel ? theme.icon : ""}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+                  return (
+                    <button
+                      key={cell.dateKey}
+                      type="button"
+                      className={`year-graph-cell${isSelected ? " selected" : ""}${cell.inYear ? "" : " out"}`}
+                      style={cell.inYear ? { background: theme.background, color: theme.textColor } : undefined}
+                      aria-label={tooltip || "Out of year range"}
+                      title={tooltip}
+                      data-tooltip={tooltip || undefined}
+                      onClick={() => {
+                        if (cell.inYear) onSelectDate?.(cell.dateKey);
+                      }}
+                      disabled={!cell.inYear}
+                      role="gridcell"
+                    >
+                      <span aria-hidden="true">{locationLabel ? theme.icon : ""}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

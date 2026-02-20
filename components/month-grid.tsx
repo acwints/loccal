@@ -24,7 +24,7 @@ interface MonthGridProps {
   onSelectDate?: (dateKey: string) => void;
 }
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 interface CalendarCell {
   key: string;
@@ -36,7 +36,7 @@ interface CalendarCell {
 function buildCalendarCells(monthKey: string): CalendarCell[] {
   const [year, month] = monthKey.split("-").map(Number);
   const firstDay = new Date(year, month - 1, 1);
-  const firstWeekday = firstDay.getDay();
+  const firstWeekday = (firstDay.getDay() + 6) % 7;
   const daysInMonth = new Date(year, month, 0).getDate();
   const prevMonthLastDay = new Date(year, month - 1, 0);
   const prevMonthDate = prevMonthLastDay.getDate();
