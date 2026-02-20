@@ -9,6 +9,9 @@ interface MonthGridProps {
   monthKey: string;
   days: Record<string, DayLocation[]>;
   settings: LoccalSettings;
+  title?: string;
+  onPrevMonth?: () => void;
+  onNextMonth?: () => void;
   overlaps?: Record<
     string,
     {
@@ -68,6 +71,9 @@ export function MonthGrid({
   monthKey,
   days,
   settings,
+  title,
+  onPrevMonth,
+  onNextMonth,
   overlaps,
   selectedDateKey,
   onSelectDate
@@ -76,6 +82,19 @@ export function MonthGrid({
 
   return (
     <div className="month-grid-wrap">
+      {title ? (
+        <div className="month-grid-toolbar">
+          <h2>{title}</h2>
+          <div className="month-grid-toolbar-actions">
+            <button type="button" className="ghost-btn" onClick={onPrevMonth}>
+              Previous
+            </button>
+            <button type="button" className="ghost-btn" onClick={onNextMonth}>
+              Next
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div className="weekdays">
         {WEEKDAYS.map((weekday) => (
           <div key={weekday} className="weekday-cell">

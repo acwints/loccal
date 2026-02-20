@@ -1,6 +1,4 @@
 "use client";
-
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { MonthGrid } from "@/components/month-grid";
@@ -83,7 +81,7 @@ async function fetchYear(year: string) {
   return payload as YearApiResponse;
 }
 
-export function LoccalDashboard({ userName }: { userName?: string | null }) {
+export function LoccalDashboard() {
   const [month, setMonth] = useState(() => toMonthKey(new Date()));
   const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -210,18 +208,6 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
   );
   const selectedOverlap = selectedDateKey ? friendMonth?.overlaps[selectedDateKey] ?? null : null;
 
-  const monthlyOverlapDays = useMemo(
-    () => (friendMonth ? Object.keys(friendMonth.overlaps).length : 0),
-    [friendMonth]
-  );
-  const activeFriendCount = useMemo(
-    () =>
-      friendMonth
-        ? friendMonth.friends.filter((friend) => friend.sharingEnabled).length
-        : 0,
-    [friendMonth]
-  );
-
   function formatTime(iso: string, timeZone: string) {
     return new Intl.DateTimeFormat("en-US", {
       timeZone,
@@ -240,28 +226,6 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
 
   return (
     <main className="dashboard-shell">
-      <header className="hero">
-        <div>
-          <p className="eyebrow">Loccal Monthly Map</p>
-          <h1>{monthLabel(month)}</h1>
-          <p>
-            {userName ? `${userName}, this` : "This"} is your inferred daily location view from
-            Google Calendar events.
-          </p>
-        </div>
-        <div className="hero-actions">
-          <button type="button" className="ghost-btn" onClick={() => goToMonth(-1)}>
-            Previous
-          </button>
-          <button type="button" className="ghost-btn" onClick={() => goToMonth(1)}>
-            Next
-          </button>
-          <Link href="/friends" className="primary-btn">
-            Manage friends
-          </Link>
-        </div>
-      </header>
-
       <div className="dashboard-view-toggle" role="tablist" aria-label="Calendar view">
         <button
           type="button"
@@ -289,19 +253,6 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
         </button>
       </div>
 
-      <section className="dashboard-insights">
-        <article className="dashboard-insight-card">
-          <p className="eyebrow">Networked overlaps</p>
-          <h2>{monthlyOverlapDays}</h2>
-          <p>Days this month where at least one friend is in the same city.</p>
-        </article>
-        <article className="dashboard-insight-card">
-          <p className="eyebrow">Active friends</p>
-          <h2>{activeFriendCount}</h2>
-          <p>Friends currently sharing travel snapshots with you.</p>
-        </article>
-      </section>
-
       {loading ? <p className="status">Loading month...</p> : null}
       {!settingsReady ? <p className="status">Loading settings…</p> : null}
       {error ? <p className="error">{error}</p> : null}
@@ -322,6 +273,9 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
               monthKey={data.month}
               days={data.days}
               settings={settings}
+              title={monthLabel(month)}
+              onPrevMonth={() => goToMonth(-1)}
+              onNextMonth={() => goToMonth(1)}
               overlaps={friendMonth?.overlaps}
               selectedDateKey={selectedDateKey}
               onSelectDate={(dateKey) =>

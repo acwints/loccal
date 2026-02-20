@@ -96,6 +96,10 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
     () => (friendMonth ? Object.keys(friendMonth.overlaps).length : 0),
     [friendMonth]
   );
+  const activeFriendCount = useMemo(
+    () => (friendMonth ? friendMonth.friends.filter((entry) => entry.sharingEnabled).length : 0),
+    [friendMonth]
+  );
   const privateFriendCount = useMemo(
     () => (friendMonth ? friendMonth.friends.filter((entry) => !entry.sharingEnabled).length : 0),
     [friendMonth]
@@ -261,16 +265,22 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
           <p>Incoming requests waiting for your decision.</p>
         </article>
         <article className="friends-metric-card">
-          <p className="eyebrow">Overlap days</p>
+          <p className="eyebrow">Networked overlaps</p>
           <h2>{overlapDayCount}</h2>
-          <p>Days this month where your cities match a friend.</p>
+          <p>Days this month where at least one friend is in the same city.</p>
         </article>
         <article className="friends-metric-card">
-          <p className="eyebrow">Attention</p>
-          <h2>{privateFriendCount + staleFriendCount}</h2>
-          <p>{privateFriendCount} private + {staleFriendCount} stale friend snapshots.</p>
+          <p className="eyebrow">Active friends</p>
+          <h2>{activeFriendCount}</h2>
+          <p>Friends currently sharing travel snapshots with you.</p>
         </article>
       </section>
+
+      {privateFriendCount + staleFriendCount > 0 ? (
+        <p className="settings-help">
+          Attention: {privateFriendCount} private + {staleFriendCount} stale friend snapshots.
+        </p>
+      ) : null}
 
       {networkLoading ? <p className="status">Loading network...</p> : null}
       {networkError ? <p className="error">{networkError}</p> : null}
