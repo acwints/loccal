@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 
+import { CitySearchInput } from "@/components/city-search-input";
+import { EmojiPicker } from "@/components/emoji-picker";
+import { GradientPicker } from "@/components/gradient-picker";
 import { useLoccalSettings } from "@/lib/use-loccal-settings";
 import {
   DEFAULT_CITY_THEMES,
@@ -65,12 +68,10 @@ export function SettingsScreen() {
         <h2>Home Location</h2>
         <p className="settings-help">Used when a day has no inferred city.</p>
         <div className="settings-row">
-          <input
-            className="settings-input"
-            type="text"
-            placeholder="San Francisco, CA"
+          <CitySearchInput
             value={settings.homeLocation}
-            onChange={(event) => setHomeLocation(toCityStateLabel(event.target.value))}
+            onChange={setHomeLocation}
+            placeholder="San Francisco, CA"
           />
         </div>
       </section>
@@ -89,27 +90,31 @@ export function SettingsScreen() {
             value={cityLabelInput}
             onChange={(event) => setCityLabelInput(event.target.value)}
           />
-          <input
-            className="settings-input"
-            type="text"
-            placeholder="Icon (emoji)"
-            value={iconInput}
-            onChange={(event) => setIconInput(event.target.value)}
-          />
-          <input
-            className="settings-input"
-            type="text"
-            placeholder="Background CSS"
-            value={backgroundInput}
-            onChange={(event) => setBackgroundInput(event.target.value)}
-          />
-          <input
-            className="settings-input"
-            type="text"
-            placeholder="Text color"
-            value={textColorInput}
-            onChange={(event) => setTextColorInput(event.target.value)}
-          />
+          <EmojiPicker value={iconInput} onChange={setIconInput} />
+          <GradientPicker value={backgroundInput} onChange={setBackgroundInput} />
+          <div className="color-picker-wrap">
+            <label className="color-picker-label">Text color</label>
+            <input
+              type="color"
+              value={textColorInput}
+              onChange={(e) => setTextColorInput(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div
+          className="theme-preview-card"
+          style={{ background: backgroundInput, color: textColorInput }}
+        >
+          <div className="day-cell-head">
+            <div className="day-label">15</div>
+            {iconInput ? <span className="day-icon">{iconInput}</span> : null}
+          </div>
+          <div className="city-list">
+            <span className="city-pill">
+              {cityLabelInput || "City, ST"}
+            </span>
+          </div>
         </div>
 
         <div className="settings-actions">

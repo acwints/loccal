@@ -1,4 +1,4 @@
-# Loccal Web App
+# Loccal App
 
 This app ports your Apps Script logic into a Next.js web app.
 

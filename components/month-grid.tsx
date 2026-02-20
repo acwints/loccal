@@ -82,7 +82,7 @@ export function MonthGrid({
                   {theme.icon ? <span className="day-icon">{theme.icon}</span> : null}
                 </div>
                 {displayLabels.length === 0 ? (
-                  <p className="none-label">No city inferred</p>
+                  <p className="none-label">&nbsp;</p>
                 ) : (
                   <div className="city-list">
                     {displayLabels.slice(0, 3).map((cityLabel) => (

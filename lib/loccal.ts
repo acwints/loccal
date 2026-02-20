@@ -100,7 +100,7 @@ interface GoogleGeocodeResponse {
   results: GoogleGeocodeResult[];
 }
 
-interface NominatimGeocodeResult {
+export interface NominatimGeocodeResult {
   address?: {
     city?: string;
     town?: string;
@@ -226,9 +226,7 @@ function getGeocodeOptions(): GeocodeOptions {
     disableGeocoding: readEnvFlag("LOCCAL_DISABLE_GEOCODING", false),
     googleApiKey: process.env.GOOGLE_MAPS_GEOCODING_API_KEY?.trim() || undefined,
     enableNominatim: readEnvFlag("LOCCAL_ENABLE_NOMINATIM_FALLBACK", true),
-    userAgent:
-      process.env.LOCCAL_GEOCODER_USER_AGENT?.trim() ||
-      "LoccalWeb/1.0 (https://loccal-web.vercel.app)"
+    userAgent: process.env.LOCCAL_GEOCODER_USER_AGENT?.trim() || "Loccal/1.0"
   };
 }
 
@@ -250,13 +248,13 @@ function isUSState(token: string) {
   return US_STATE_CODES.has(normalized) || US_STATE_MAP[normalized] != null;
 }
 
-function normalizeUSState(token: string) {
+export function normalizeUSState(token: string) {
   const normalized = token.trim().toUpperCase();
   if (US_STATE_CODES.has(normalized)) return normalized;
   return US_STATE_MAP[normalized] ?? null;
 }
 
-function normalizeCountry(token?: string) {
+export function normalizeCountry(token?: string) {
   if (!token) return null;
   const normalized = token.trim().replace(/\./g, "").replace(/\s+/g, " ").toUpperCase();
   if (!normalized) return null;
@@ -309,7 +307,7 @@ function hasNonLocationWords(segment: string) {
   return words.some((word) => NON_LOCATION_WORDS.has(word));
 }
 
-function isLikelyCitySegment(segment: string) {
+export function isLikelyCitySegment(segment: string) {
   const trimmed = segment.trim();
   if (!trimmed) return false;
   if (trimmed.length < 2 || trimmed.length > 40) return false;
@@ -375,7 +373,7 @@ function getCityStateCountryFromLocation(location: string) {
   return null;
 }
 
-function formatResolvedLocation(
+export function formatResolvedLocation(
   cityToken: string | undefined,
   regionToken: string | undefined,
   countryToken: string | undefined

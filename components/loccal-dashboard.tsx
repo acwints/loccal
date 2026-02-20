@@ -178,7 +178,7 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
                 </article>
               ) : null}
               {selectedDayLocations.length === 0 && !selectedHomeFallback ? (
-                <p>No city inferred for this date.</p>
+                <p>&nbsp;</p>
               ) : (
                 <div className="day-detail-list">
                   {selectedDayLocations.map((entry) => (

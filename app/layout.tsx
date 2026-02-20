@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  title: "Loccal Web",
+  title: "Loccal",
   description: "Google Calendar monthly location rollup"
 };
 
