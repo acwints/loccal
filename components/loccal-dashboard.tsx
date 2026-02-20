@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { MonthGrid } from "@/components/month-grid";
+import { YearContributionGraph } from "@/components/year-contribution-graph";
 import type { InferredEvent } from "@/lib/loccal";
 import type { FriendMonthResponse } from "@/lib/social-types";
 import { useLoccalSettings } from "@/lib/use-loccal-settings";
@@ -16,6 +17,14 @@ interface ApiResponse {
   generatedAt: string;
   generatedBy: string;
   socialSnapshotSaved?: boolean;
+}
+
+interface YearApiResponse {
+  year: string;
+  days: Record<string, { location: string; events: InferredEvent[] }[]>;
+  timeZone: string;
+  generatedAt: string;
+  generatedBy: string;
 }
 
 function toMonthKey(date: Date) {
@@ -59,16 +68,35 @@ async function fetchFriendMonth(month: string) {
   return payload as FriendMonthResponse;
 }
 
+async function fetchYear(year: string) {
+  const response = await fetch(`/api/loccal/year?year=${year}`, {
+    method: "GET",
+    cache: "no-store"
+  });
+
+  const payload = (await response.json()) as YearApiResponse | { error: string };
+
+  if (!response.ok) {
+    throw new Error((payload as { error: string }).error || "Failed to fetch year.");
+  }
+
+  return payload as YearApiResponse;
+}
+
 export function LoccalDashboard({ userName }: { userName?: string | null }) {
   const [month, setMonth] = useState(() => toMonthKey(new Date()));
   const [data, setData] = useState<ApiResponse | null>(null);
   const [friendMonth, setFriendMonth] = useState<FriendMonthResponse | null>(null);
   const [friendMonthError, setFriendMonthError] = useState<string | null>(null);
   const [friendMonthLoading, setFriendMonthLoading] = useState(false);
+  const [yearData, setYearData] = useState<YearApiResponse | null>(null);
+  const [yearLoading, setYearLoading] = useState(false);
+  const [yearError, setYearError] = useState<string | null>(null);
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { ready: settingsReady, settings } = useLoccalSettings();
+  const selectedYear = month.slice(0, 4);
 
   useEffect(() => {
     let canceled = false;
@@ -118,6 +146,29 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
       canceled = true;
     };
   }, [data?.generatedAt, data?.month, month]);
+
+  useEffect(() => {
+    let canceled = false;
+    setYearLoading(true);
+
+    fetchYear(selectedYear)
+      .then((result) => {
+        if (canceled) return;
+        setYearData(result);
+        setYearError(null);
+      })
+      .catch((err: unknown) => {
+        if (canceled) return;
+        setYearError(err instanceof Error ? err.message : "Failed to load yearly footprint.");
+      })
+      .finally(() => {
+        if (!canceled) setYearLoading(false);
+      });
+
+    return () => {
+      canceled = true;
+    };
+  }, [selectedYear]);
 
   function goToMonth(offset: number) {
     const [year, monthNum] = month.split("-").map(Number);
@@ -233,6 +284,8 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
       ) : null}
       {friendMonthLoading ? <p className="status">Loading friend schedule overlaps...</p> : null}
       {friendMonthError ? <p className="error">{friendMonthError}</p> : null}
+      {yearLoading ? <p className="status">Loading yearly contribution graph...</p> : null}
+      {yearError ? <p className="error">{yearError}</p> : null}
 
       {data ? (
         <>
@@ -246,6 +299,17 @@ export function LoccalDashboard({ userName }: { userName?: string | null }) {
               setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
             }
           />
+          {yearData ? (
+            <YearContributionGraph
+              year={Number(yearData.year)}
+              days={yearData.days}
+              settings={settings}
+              selectedDateKey={selectedDateKey}
+              onSelectDate={(dateKey) =>
+                setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
+              }
+            />
+          ) : null}
           {selectedDateKey ? (
             <button
               type="button"

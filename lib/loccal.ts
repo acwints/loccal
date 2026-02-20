@@ -78,6 +78,11 @@ export interface MonthlyRollup {
   days: Record<string, DayLocation[]>;
 }
 
+export interface YearlyRollup {
+  year: string;
+  days: Record<string, DayLocation[]>;
+}
+
 interface GeocodeOptions {
   disableGeocoding: boolean;
   googleApiKey?: string;
@@ -714,6 +719,109 @@ export async function buildMonthlyLocationRollup(
 
   return {
     month: monthKey,
+    days: normalizedDays
+  };
+}
+
+export async function buildYearlyLocationRollup(
+  events: CalendarEventInput[],
+  year: string,
+  timeZone: string
+): Promise<YearlyRollup> {
+  const locationMap: Record<string, Record<string, EventGroup[]>> = {};
+  const multiDayAllDayByCity: Record<string, DayRange[]> = {};
+  const sourceLocations = Array.from(
+    new Set(
+      events
+        .map((event) => event.location?.trim().replace(/\s+/g, " "))
+        .filter((location): location is string => Boolean(location))
+    )
+  );
+  const locationResolutionMap = await buildLocationResolutionMap(sourceLocations);
+
+  for (const event of events) {
+    const sourceLocation = event.location?.trim().replace(/\s+/g, " ");
+    if (!sourceLocation) continue;
+
+    const cityStateCountry = locationResolutionMap.get(sourceLocation) ?? null;
+    if (!cityStateCountry) continue;
+
+    const inferredEvent: InferredEvent = {
+      title: event.title,
+      isAllDay: event.isAllDay,
+      startIso: event.start.toISOString(),
+      endIso: event.end.toISOString(),
+      inferredFrom: sourceLocation,
+      mapsUrl: `https://www.google.com/maps/search/${encodeURIComponent(sourceLocation)}`
+    };
+
+    if (event.isAllDay && event.end > event.start && event.allDayStartKey && event.allDayEndKeyExclusive) {
+      if (!multiDayAllDayByCity[cityStateCountry]) {
+        multiDayAllDayByCity[cityStateCountry] = [];
+      }
+      multiDayAllDayByCity[cityStateCountry].push({
+        startDay: dateKeyToEpochDay(event.allDayStartKey),
+        endDayExclusive: dateKeyToEpochDay(event.allDayEndKeyExclusive),
+        events: [inferredEvent]
+      });
+      continue;
+    }
+
+    const dateKey = toDateKey(event.start, timeZone);
+    if (!locationMap[dateKey]) locationMap[dateKey] = {};
+    if (!locationMap[dateKey][cityStateCountry]) locationMap[dateKey][cityStateCountry] = [];
+    locationMap[dateKey][cityStateCountry].push({ start: event.start, event: inferredEvent });
+  }
+
+  const yearPrefix = `${year}-`;
+  const days: Record<string, Record<string, InferredEvent[]>> = {};
+
+  for (const [dateKey, locationGroups] of Object.entries(locationMap)) {
+    if (!dateKey.startsWith(yearPrefix)) continue;
+
+    for (const [cityStateCountry, groupedEvents] of Object.entries(locationGroups)) {
+      groupedEvents.sort((a, b) => a.start.getTime() - b.start.getTime());
+      addDayLocation(
+        days,
+        dateKey,
+        cityStateCountry,
+        groupedEvents.map((item) => item.event)
+      );
+    }
+  }
+
+  for (const [cityStateCountry, ranges] of Object.entries(multiDayAllDayByCity)) {
+    const mergedRanges = mergeRangesAndCombineDetails(ranges);
+
+    for (const range of mergedRanges) {
+      for (let day = range.startDay; day < range.endDayExclusive; day += 1) {
+        const dateKey = epochDayToDateKey(day);
+        if (!dateKey.startsWith(yearPrefix)) continue;
+        addDayLocation(days, dateKey, cityStateCountry, range.events);
+      }
+    }
+  }
+
+  const normalizedDays: Record<string, DayLocation[]> = {};
+
+  for (const [dateKey, groupedLocations] of Object.entries(days)) {
+    normalizedDays[dateKey] = Object.entries(groupedLocations)
+      .map(([location, cityEvents]) => ({
+        location,
+        events: Array.from(
+          new Map(
+            cityEvents.map((event) => [
+              `${event.title}|${event.startIso}|${event.endIso}|${event.inferredFrom}`,
+              event
+            ])
+          ).values()
+        ).sort((a, b) => new Date(a.startIso).getTime() - new Date(b.startIso).getTime())
+      }))
+      .sort((a, b) => a.location.localeCompare(b.location));
+  }
+
+  return {
+    year,
     days: normalizedDays
   };
 }
