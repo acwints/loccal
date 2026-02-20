@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
@@ -38,7 +39,7 @@ export function UniversalHeader({ user }: UniversalHeaderProps) {
       <div className="topbar-inner">
         <Link href={isAuthed ? "/dashboard" : "/"} className="brand-link">
           <span className="brand-mark" aria-hidden="true">
-            LC
+            <Image src="/icon.svg" alt="" width={34} height={34} className="brand-mark-img" priority />
           </span>
           <span className="brand-text">Loccal</span>
         </Link>
@@ -47,13 +48,19 @@ export function UniversalHeader({ user }: UniversalHeaderProps) {
           <nav className="topbar-nav" aria-label="Main navigation">
             <Link
               href="/dashboard"
-              className={`topbar-nav-link${pathname === "/dashboard" ? " active" : ""}`}
+              className={`topbar-nav-link${pathname.startsWith("/dashboard") ? " active" : ""}`}
             >
               Dashboard
             </Link>
             <Link
+              href="/friends"
+              className={`topbar-nav-link${pathname.startsWith("/friends") ? " active" : ""}`}
+            >
+              Friends
+            </Link>
+            <Link
               href="/settings"
-              className={`topbar-nav-link${pathname === "/settings" ? " active" : ""}`}
+              className={`topbar-nav-link${pathname.startsWith("/settings") ? " active" : ""}`}
             >
               Settings
             </Link>
@@ -88,6 +95,9 @@ export function UniversalHeader({ user }: UniversalHeaderProps) {
                 {user?.email ? <p className="avatar-email">{user.email}</p> : null}
                 <Link href="/dashboard" className="avatar-menu-link" onClick={() => setMenuOpen(false)}>
                   Dashboard
+                </Link>
+                <Link href="/friends" className="avatar-menu-link" onClick={() => setMenuOpen(false)}>
+                  Friends
                 </Link>
                 <Link href="/settings" className="avatar-menu-link" onClick={() => setMenuOpen(false)}>
                   Settings

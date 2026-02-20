@@ -92,16 +92,14 @@ h2 {
 .brand-mark {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.73rem;
-  letter-spacing: 0.06em;
-  font-weight: 800;
-  color: #fff;
-  background: linear-gradient(145deg, #104f2d, #0f8f49);
-  box-shadow: 0 8px 24px rgba(15, 143, 73, 0.35);
+}
+
+.brand-mark-img {
+  width: 100%;
+  height: 100%;
 }
 
 .brand-text {
@@ -564,21 +562,99 @@ h2 {
   gap: 1rem;
 }
 
-.social-layout {
+.dashboard-insights {
   margin-top: 1rem;
   display: grid;
   gap: 0.8rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.social-card {
+.dashboard-insight-card {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: linear-gradient(145deg, var(--card), #f7f1df);
   box-shadow: 0 14px 48px rgba(19, 33, 20, 0.1);
+  padding: 1rem;
+}
+
+.dashboard-insight-card h2 {
+  margin: 0.35rem 0 0.4rem;
+}
+
+.friends-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.friends-hero,
+.friends-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fffdf7, #f3ebd8);
+  box-shadow: 0 14px 48px rgba(19, 33, 20, 0.1);
+}
+
+.friends-hero {
+  padding: 1.15rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  background:
+    radial-gradient(circle at 88% 22%, rgba(23, 143, 82, 0.14), transparent 38%),
+    linear-gradient(145deg, #fffdf7, #f3ebd8);
+}
+
+.friends-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.friends-metrics {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.friends-metric-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(145deg, #fffef9, #f6f0df);
+  box-shadow: 0 10px 32px rgba(19, 33, 20, 0.08);
+  padding: 0.85rem 0.9rem;
+}
+
+.friends-metric-card h2 {
+  margin: 0.35rem 0;
+}
+
+.friends-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 0.8rem;
+}
+
+.friends-stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.friends-card {
   padding: 0.95rem;
   display: grid;
   gap: 0.65rem;
+}
+
+.friends-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.friends-card-discover {
+  align-content: flex-start;
 }
 
 .social-search-row {
@@ -667,6 +743,32 @@ h2 {
 
 .social-btn-danger {
   color: #7b2e2e;
+}
+
+.friend-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.friend-chip {
+  border: 1px solid rgba(31, 59, 36, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #2a4731;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+}
+
+.friend-chip-subtle {
+  color: #41554a;
+  border-color: rgba(65, 85, 74, 0.2);
+}
+
+.friend-chip-warn {
+  color: #7a2e2e;
+  border-color: rgba(122, 46, 46, 0.28);
 }
 
 .settings-hero {
@@ -988,8 +1090,12 @@ h2 {
     gap: 0.6rem;
   }
 
-  .social-layout {
-    grid-template-columns: 1fr 1fr;
+  .friends-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .friends-layout {
+    grid-template-columns: 1fr;
   }
 
   .default-theme-grid {
@@ -1027,8 +1133,12 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .social-layout {
+  .friends-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .friends-hero {
+    flex-direction: column;
   }
 
   .day-side-panel {
