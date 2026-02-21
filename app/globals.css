@@ -387,8 +387,9 @@ h2 {
 /* ── GitHub-style grid: weekdays across top, weeks down side ── */
 
 .year-grid-github {
+  --yg-cell: 13px;
   display: grid;
-  grid-template-columns: 2.4rem repeat(7, minmax(0, 1fr));
+  grid-template-columns: 2.4rem repeat(7, var(--yg-cell));
   gap: 2px;
 }
 
@@ -426,7 +427,6 @@ h2 {
 
 .year-grid-cell {
   aspect-ratio: 1;
-  width: 100%;
   border: 1px solid color-mix(in srgb, var(--line) 76%, var(--ink));
   border-radius: 0.2rem;
   padding: 0;
@@ -462,7 +462,8 @@ h2 {
 
 /* Compact variant for sidebar */
 .year-graph-compact .year-grid-github {
-  grid-template-columns: 2rem repeat(7, minmax(0, 1fr));
+  --yg-cell: 11px;
+  grid-template-columns: 2rem repeat(7, var(--yg-cell));
   gap: 1px;
 }
 
@@ -1390,7 +1391,8 @@ h2 {
 
   /* Year graph gets more room when stacked */
   .year-graph-compact .year-grid-github {
-    grid-template-columns: 2.4rem repeat(7, minmax(0, 1fr));
+    --yg-cell: 13px;
+    grid-template-columns: 2.4rem repeat(7, var(--yg-cell));
     gap: 2px;
   }
 
