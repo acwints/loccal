@@ -1,3 +1,4 @@
+import React from "react";
 import type { DayLocation } from "@/lib/loccal";
 import { getCityTheme, toCityStateLabel, type LoccalSettings } from "@/lib/user-settings";
 
@@ -98,20 +99,19 @@ export function YearContributionGraph({
 
       <div className="year-graph-scroll">
         <div className="year-grid-github" role="grid" aria-label={`Location graph for ${year}`}>
-          {/* Month labels column */}
+          {/* Row 1: corner + 7 weekday headers */}
           <div className="year-grid-corner" />
-          {weeks.map((_, wi) => (
-            <div key={`ml-${wi}`} className="year-grid-month-label">
-              {monthLabels[wi] ?? ""}
-            </div>
+          {WEEKDAY_LABELS.map((label) => (
+            <div key={label} className="year-grid-day-hdr">{label}</div>
           ))}
 
-          {/* Weekday columns */}
-          {WEEKDAY_LABELS.map((label, dow) => (
-            <div key={`col-${dow}`} className="year-grid-weekday-col">
-              <div className="year-grid-day-hdr">{label}</div>
-              {weeks.map((week, wi) => {
-                const cell = week[dow];
+          {/* Week rows: month label + 7 day cells per row */}
+          {weeks.map((week, wi) => (
+            <React.Fragment key={`week-${wi}`}>
+              <div className="year-grid-month-label">
+                {monthLabels[wi] ?? ""}
+              </div>
+              {week.map((cell, dow) => {
                 const inYear = cell.date.getFullYear() === year;
 
                 if (!inYear) {
@@ -153,7 +153,7 @@ export function YearContributionGraph({
                   </button>
                 );
               })}
-            </div>
+            </React.Fragment>
           ))}
         </div>
       </div>
