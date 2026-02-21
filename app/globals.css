@@ -352,167 +352,126 @@ h2 {
   gap: 0.45rem;
 }
 
+/* ── Year graph card ── */
+
 .year-graph-card {
-  margin-top: 1rem;
+  margin-top: 0;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: #fff;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 20px rgba(16, 24, 40, 0.04);
-  padding: 0.95rem 1rem 1rem;
+  padding: 0.75rem 0.8rem 0.8rem;
 }
 
 .year-graph-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .year-graph-head h2 {
-  margin-top: 0.2rem;
-  font-size: clamp(1rem, 2.1vw, 1.25rem);
+  margin-top: 0.15rem;
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
   font-weight: 650;
-  color: #1d2939;
+  color: var(--ink);
 }
 
 .year-graph-scroll {
-  margin-top: 0.8rem;
+  margin-top: 0.6rem;
   overflow-x: auto;
-  padding-bottom: 0.35rem;
+  padding-bottom: 0.2rem;
+  scrollbar-width: thin;
 }
 
-.year-graph-months {
-  min-width: 950px;
+/* ── Transposed grid: days across top, months down side ── */
+
+.year-grid-transposed {
   display: grid;
-  margin-left: 3rem;
-  margin-bottom: 0.45rem;
+  grid-template-columns: 2.4rem repeat(31, minmax(0, 1fr));
+  gap: 2px;
 }
 
-.year-graph-months span {
-  font-size: 0.68rem;
+.year-grid-corner {
+  /* empty top-left cell */
+}
+
+.year-grid-day-hdr {
+  font-size: 0.58rem;
   font-weight: 600;
+  text-align: center;
+  color: var(--muted);
+  padding: 0 0 0.2rem;
+  letter-spacing: 0.01em;
+}
+
+.year-grid-month-label {
+  font-size: 0.66rem;
+  font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: #667085;
-  white-space: nowrap;
-}
-
-.year-graph-grid {
-  min-width: 950px;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1.1rem;
-  gap: 0.24rem;
-}
-
-.year-graph-body {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-}
-
-.year-graph-axis {
-  width: 2.2rem;
-  display: grid;
-  grid-template-rows: repeat(7, 1.1rem);
-  gap: 0.24rem;
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
   color: var(--muted);
+  display: flex;
+  align-items: center;
+  padding-right: 0.25rem;
 }
 
-.year-graph-axis-sun {
-  grid-row: 7;
-  align-self: center;
-}
-
-.year-graph-axis-mon {
-  grid-row: 1;
-  align-self: center;
-}
-
-.year-graph-week {
-  display: grid;
-  grid-template-rows: repeat(7, 1.1rem);
-  gap: 0.24rem;
-}
-
-.year-graph-cell {
-  width: 1.1rem;
-  height: 1.1rem;
-  border: 1px solid rgba(134, 147, 168, 0.35);
-  border-radius: 0.24rem;
+.year-grid-cell {
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, var(--ink));
+  border-radius: 0.2rem;
   padding: 0;
-  position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.68rem;
+  font-size: 0.55rem;
   line-height: 1;
   cursor: pointer;
-  transition:
-    transform 120ms ease,
-    filter 120ms ease,
-    box-shadow 120ms ease;
+  transition: transform 100ms ease, filter 100ms ease, box-shadow 100ms ease;
 }
 
-.year-graph-cell:hover {
-  filter: saturate(1.03);
-  transform: translateY(-1px);
+.year-grid-cell:hover {
+  filter: brightness(1.05) saturate(1.1);
+  transform: scale(1.15);
+  z-index: 1;
 }
 
-.year-graph-cell[data-tooltip]:hover::after,
-.year-graph-cell[data-tooltip]:focus-visible::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 7px);
-  transform: translateX(-50%);
-  max-width: 220px;
-  white-space: nowrap;
-  padding: 0.28rem 0.45rem;
-  border-radius: 0.38rem;
-  border: 1px solid var(--line);
-  background: var(--surface-1);
-  color: var(--ink);
-  font-size: 0.68rem;
-  font-weight: 500;
-  line-height: 1.2;
-  box-shadow: var(--shadow-soft);
-  pointer-events: none;
-  z-index: 10;
-}
-
-.year-graph-cell[data-tooltip]:hover::before,
-.year-graph-cell[data-tooltip]:focus-visible::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 2px);
-  transform: translateX(-50%) rotate(45deg);
-  width: 8px;
-  height: 8px;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-1);
-  pointer-events: none;
-  z-index: 9;
-}
-
-.year-graph-cell:focus-visible {
-  outline: 2px solid rgba(31, 111, 235, 0.5);
+.year-grid-cell:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
   outline-offset: 1px;
 }
 
-.year-graph-cell.selected {
-  box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.5);
+.year-grid-cell.selected {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  z-index: 2;
 }
 
-.year-graph-cell.out {
-  border-color: transparent;
-  background: transparent;
-  cursor: default;
+.year-grid-cell-empty {
+  /* placeholder for days that don't exist in a given month */
+}
+
+/* Compact variant for sidebar */
+.year-graph-compact .year-grid-transposed {
+  grid-template-columns: 2rem repeat(31, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.year-graph-compact .year-grid-day-hdr {
+  font-size: 0.5rem;
+}
+
+.year-graph-compact .year-grid-month-label {
+  font-size: 0.58rem;
+}
+
+.year-graph-compact .year-grid-cell {
+  font-size: 0;
+  border-radius: 1px;
+}
+
+.year-graph-compact .year-grid-cell span {
+  display: none;
 }
 
 .weekdays,
@@ -665,45 +624,87 @@ h2 {
   color: #2f5daa;
 }
 
-.day-rail-backdrop {
+/* ── Center modal overlay ── */
+
+.modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 70;
-  border: none;
-  background: rgba(19, 33, 20, 0.34);
+  z-index: 100;
+  background: rgba(19, 33, 20, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.day-modal {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(165deg, var(--surface-1), var(--surface-2));
+  box-shadow: 0 24px 64px rgba(19, 33, 20, 0.22);
   padding: 0;
-  cursor: pointer;
-}
-
-.day-side-panel {
-  position: fixed;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: min(420px, 96vw);
+  width: min(560px, 100%);
+  max-height: 80vh;
   overflow-y: auto;
-  z-index: 80;
-  border-left: 1px solid var(--line);
-  background: linear-gradient(145deg, var(--card), #f7f1df);
-  box-shadow: -18px 0 36px rgba(19, 33, 20, 0.18);
-  padding: 1rem 1rem 1.25rem;
+  color: var(--ink);
 }
 
-.day-side-header {
+.day-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
+  padding: 1rem 1.15rem 0.75rem;
+  background: linear-gradient(165deg, var(--surface-1), var(--surface-2));
+  border-bottom: 1px solid var(--line);
 }
 
-.close-panel-btn {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
+.day-modal-header h2 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.05rem, 2.3vw, 1.35rem);
 }
 
-.day-side-panel h2 {
-  margin: 0.35rem 0 0.7rem;
-  font-size: clamp(1.05rem, 2.3vw, 1.45rem);
+.modal-close-btn {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 1.3rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-modal-body {
+  padding: 0.85rem 1.15rem 1.25rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+/* ── Dashboard split layout ── */
+
+.dashboard-split {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.dashboard-split-main {
+  min-width: 0;
+}
+
+.dashboard-split-side {
+  min-width: 0;
+  position: sticky;
+  top: 4.5rem;
 }
 
 .day-detail-list {
@@ -1361,6 +1362,14 @@ h2 {
 }
 
 @media (max-width: 960px) {
+  .dashboard-split {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-split-side {
+    position: static;
+  }
+
   .day-cell,
   .day-button {
     min-height: 108px;
@@ -1368,6 +1377,29 @@ h2 {
 
   .settings-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Year graph gets more room when stacked */
+  .year-graph-compact .year-grid-transposed {
+    grid-template-columns: 2.4rem repeat(31, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .year-graph-compact .year-grid-cell {
+    font-size: 0.55rem;
+    border-radius: 0.2rem;
+  }
+
+  .year-graph-compact .year-grid-cell span {
+    display: inline;
+  }
+
+  .year-graph-compact .year-grid-day-hdr {
+    font-size: 0.58rem;
+  }
+
+  .year-graph-compact .year-grid-month-label {
+    font-size: 0.66rem;
   }
 }
 
@@ -1398,8 +1430,15 @@ h2 {
     flex-direction: column;
   }
 
-  .day-side-panel {
-    width: 100vw;
+  /* Modal goes nearly full-screen on mobile */
+  .modal-backdrop {
+    padding: 0.5rem;
+  }
+
+  .day-modal {
+    width: 100%;
+    max-height: 90vh;
+    border-radius: 14px;
   }
 }
 
@@ -1429,6 +1468,10 @@ h2 {
   .day-cell,
   .day-cell:nth-child(7n) {
     border-right: none;
+  }
+
+  .day-cell.other-month {
+    display: none;
   }
 
   .day-cell.empty {
@@ -1597,7 +1640,7 @@ p,
 .settings-hero,
 .theme-preview-card,
 .snapshot-card,
-.day-side-panel {
+.day-modal {
   border-color: var(--line);
   background: linear-gradient(165deg, var(--surface-1), var(--surface-2));
   box-shadow: var(--shadow-soft);
@@ -1623,7 +1666,8 @@ p,
   background: color-mix(in srgb, var(--surface-1) 82%, transparent);
 }
 
-.year-graph-months span,
+.year-grid-day-hdr,
+.year-grid-month-label,
 .home-note,
 .extra,
 .none-label,
@@ -1631,6 +1675,19 @@ p,
   color: var(--muted);
 }
 
-.year-graph-cell {
+.year-grid-cell {
   border-color: color-mix(in srgb, var(--line) 76%, var(--ink));
+}
+
+.modal-backdrop {
+  background: color-mix(in srgb, var(--bg) 60%, rgba(0, 0, 0, 0.5));
+}
+
+.day-modal,
+.day-modal-header {
+  background: linear-gradient(165deg, var(--surface-1), var(--surface-2));
+}
+
+.day-modal-header {
+  border-bottom-color: var(--line);
 }

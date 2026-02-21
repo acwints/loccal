@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { MonthGrid } from "@/components/month-grid";
 import { YearContributionGraph } from "@/components/year-contribution-graph";
@@ -83,7 +83,6 @@ async function fetchYear(year: string) {
 
 export function LoccalDashboard() {
   const [month, setMonth] = useState(() => toMonthKey(new Date()));
-  const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
   const [data, setData] = useState<ApiResponse | null>(null);
   const [friendMonth, setFriendMonth] = useState<FriendMonthResponse | null>(null);
   const [friendMonthError, setFriendMonthError] = useState<string | null>(null);
@@ -169,6 +168,16 @@ export function LoccalDashboard() {
     };
   }, [selectedYear]);
 
+  // Close modal on Escape
+  useEffect(() => {
+    if (!selectedDateKey) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setSelectedDateKey(null);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedDateKey]);
+
   function goToMonth(offset: number) {
     const [year, monthNum] = month.split("-").map(Number);
     const nextDate = new Date(year, monthNum - 1 + offset, 1);
@@ -226,35 +235,8 @@ export function LoccalDashboard() {
 
   return (
     <main className="dashboard-shell">
-      <div className="dashboard-view-toggle" role="tablist" aria-label="Calendar view">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={viewMode === "monthly"}
-          className={`dashboard-view-toggle-btn${viewMode === "monthly" ? " active" : ""}`}
-          onClick={() => {
-            setViewMode("monthly");
-            setSelectedDateKey(null);
-          }}
-        >
-          Monthly
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={viewMode === "yearly"}
-          className={`dashboard-view-toggle-btn${viewMode === "yearly" ? " active" : ""}`}
-          onClick={() => {
-            setViewMode("yearly");
-            setSelectedDateKey(null);
-          }}
-        >
-          Full Year
-        </button>
-      </div>
-
       {loading ? <p className="status">Loading month...</p> : null}
-      {!settingsReady ? <p className="status">Loading settings…</p> : null}
+      {!settingsReady ? <p className="status">Loading settings...</p> : null}
       {error ? <p className="error">{error}</p> : null}
       {data?.socialSnapshotSaved === false ? (
         <p className="error">
@@ -263,149 +245,164 @@ export function LoccalDashboard() {
       ) : null}
       {friendMonthLoading ? <p className="status">Loading friend schedule overlaps...</p> : null}
       {friendMonthError ? <p className="error">{friendMonthError}</p> : null}
-      {yearLoading ? <p className="status">Loading yearly contribution graph...</p> : null}
       {yearError ? <p className="error">{yearError}</p> : null}
 
       {data ? (
         <>
-          {viewMode === "monthly" ? (
-            <MonthGrid
-              monthKey={data.month}
-              days={data.days}
-              settings={settings}
-              title={monthLabel(month)}
-              onPrevMonth={() => goToMonth(-1)}
-              onNextMonth={() => goToMonth(1)}
-              overlaps={friendMonth?.overlaps}
-              selectedDateKey={selectedDateKey}
-              onSelectDate={(dateKey) =>
-                setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
-              }
-            />
-          ) : null}
-          {viewMode === "yearly" && yearData ? (
-            <YearContributionGraph
-              year={Number(yearData.year)}
-              days={yearData.days}
-              settings={settings}
-              selectedDateKey={selectedDateKey}
-              onSelectDate={(dateKey) =>
-                setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
-              }
-            />
-          ) : null}
-          {selectedDateKey ? (
-            <button
-              type="button"
-              className="day-rail-backdrop"
-              onClick={() => setSelectedDateKey(null)}
-              aria-label="Close selected day panel"
-            />
-          ) : null}
-          {selectedDateKey ? (
-            <aside className="day-side-panel" role="dialog" aria-modal="true">
-              <div className="day-side-header">
-                <p className="eyebrow">Selected day</p>
-                <button
-                  type="button"
-                  className="ghost-btn close-panel-btn"
-                  onClick={() => setSelectedDateKey(null)}
-                >
-                  Close
-                </button>
-              </div>
-              <h2>{formatDateLabel(selectedDateKey)}</h2>
-              {selectedDayLocations.length === 0 && selectedHomeFallback ? (
-                <article className="day-detail-item">
-                  <h3>{selectedHomeFallback}</h3>
-                  <p className="settings-help">Home default used for this day (no inferred travel).</p>
-                </article>
+          <div className="dashboard-split">
+            <div className="dashboard-split-main">
+              <MonthGrid
+                monthKey={data.month}
+                days={data.days}
+                settings={settings}
+                title={monthLabel(month)}
+                onPrevMonth={() => goToMonth(-1)}
+                onNextMonth={() => goToMonth(1)}
+                overlaps={friendMonth?.overlaps}
+                selectedDateKey={selectedDateKey}
+                onSelectDate={(dateKey) =>
+                  setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
+                }
+              />
+            </div>
+            <div className="dashboard-split-side">
+              {yearData ? (
+                <YearContributionGraph
+                  year={Number(yearData.year)}
+                  days={yearData.days}
+                  settings={settings}
+                  selectedDateKey={selectedDateKey}
+                  onSelectDate={(dateKey) =>
+                    setSelectedDateKey((current) => (current === dateKey ? null : dateKey))
+                  }
+                  compact
+                />
+              ) : yearLoading ? (
+                <p className="status">Loading year...</p>
               ) : null}
-              {selectedOverlap ? (
-                <article className="day-detail-item overlap-detail-item">
-                  <h3>Friend overlap</h3>
-                  <p className="settings-help">
-                    You overlap with {selectedOverlap.friendNames.join(", ")} in{" "}
-                    {selectedOverlap.cities.map((city) => toCityStateLabel(city)).join(", ")}.
-                  </p>
-                </article>
-              ) : null}
-              {selectedDayLocations.length === 0 && !selectedHomeFallback ? (
-                <p>&nbsp;</p>
-              ) : (
-                <div className="day-detail-list">
-                  {selectedDayLocations.map((entry) => (
-                    <article key={`${selectedDateKey}-${entry.location}`} className="day-detail-item">
-                      <h3>{toCityStateLabel(entry.location)}</h3>
-                      <ul>
-                        {entry.events.map((event, eventIdx) => (
-                          <li key={`${entry.location}-${event.title}-${eventIdx}`}>
-                            <strong>{eventTimeLabel(event, data.timeZone)}</strong>: {event.title}
-                            <br />
-                            <span className="event-evidence">
-                              inferred from{" "}
-                              <a href={event.mapsUrl} target="_blank" rel="noreferrer">
-                                {event.inferredFrom}
-                              </a>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </article>
-                  ))}
-                </div>
-              )}
+            </div>
+          </div>
 
-              <div className="friend-day-section">
-                <h3>Friend schedules</h3>
-                {!friendMonth?.ownSnapshotAvailable ? (
-                  <p className="settings-help">
-                    Open a month once to publish your snapshot and enable overlap comparisons.
-                  </p>
-                ) : null}
-                {selectedVisibleFriendSchedules.length === 0 ? (
-                  <p className="settings-help">
-                    No friend travel entries recorded for this date.
-                  </p>
-                ) : (
-                  <div className="day-detail-list">
-                    {selectedVisibleFriendSchedules.map((friend) => (
-                      <article key={`${selectedDateKey}-${friend.id}`} className="day-detail-item">
-                        <h3>
-                          {friend.name}
-                          {friend.isStale ? <span className="friend-stale-tag">Stale snapshot</span> : null}
-                        </h3>
-                        <ul>
-                          {friend.dayLocations.map((locationEntry) => (
-                            <li key={`${friend.id}-${locationEntry.location}`}>
-                              <strong>{toCityStateLabel(locationEntry.location)}</strong> ·{" "}
-                              {locationEntry.events.length} event
-                              {locationEntry.events.length === 1 ? "" : "s"}
-                            </li>
-                          ))}
-                        </ul>
-                        {friend.generatedAt ? (
-                          <p className="settings-help">
-                            Last updated {new Date(friend.generatedAt).toLocaleString()}
-                          </p>
-                        ) : null}
-                      </article>
-                    ))}
+          {/* Center modal overlay */}
+          {selectedDateKey ? (
+            <div className="modal-backdrop" onClick={() => setSelectedDateKey(null)}>
+              <dialog
+                className="day-modal"
+                open
+                onClick={(e) => e.stopPropagation()}
+                aria-modal="true"
+                aria-label="Day details"
+              >
+                <div className="day-modal-header">
+                  <div>
+                    <p className="eyebrow">Selected day</p>
+                    <h2>{formatDateLabel(selectedDateKey)}</h2>
                   </div>
-                )}
-                {selectedPrivateFriends.length > 0 ? (
-                  <p className="settings-help">
-                    Hidden by privacy settings: {selectedPrivateFriends.map((friend) => friend.name).join(", ")}.
-                  </p>
-                ) : null}
-                {selectedNoDataFriends.length > 0 ? (
-                  <p className="settings-help">
-                    No snapshot for this date: {selectedNoDataFriends.map((friend) => friend.name).join(", ")}.
-                  </p>
-                ) : null}
-              </div>
-            </aside>
+                  <button
+                    type="button"
+                    className="ghost-btn modal-close-btn"
+                    onClick={() => setSelectedDateKey(null)}
+                    aria-label="Close"
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <div className="day-modal-body">
+                  {selectedDayLocations.length === 0 && selectedHomeFallback ? (
+                    <article className="day-detail-item">
+                      <h3>{selectedHomeFallback}</h3>
+                      <p className="settings-help">Home default used for this day (no inferred travel).</p>
+                    </article>
+                  ) : null}
+                  {selectedOverlap ? (
+                    <article className="day-detail-item overlap-detail-item">
+                      <h3>Friend overlap</h3>
+                      <p className="settings-help">
+                        You overlap with {selectedOverlap.friendNames.join(", ")} in{" "}
+                        {selectedOverlap.cities.map((city) => toCityStateLabel(city)).join(", ")}.
+                      </p>
+                    </article>
+                  ) : null}
+                  {selectedDayLocations.length === 0 && !selectedHomeFallback ? (
+                    <p className="settings-help">No location data for this day.</p>
+                  ) : (
+                    <div className="day-detail-list">
+                      {selectedDayLocations.map((entry) => (
+                        <article key={`${selectedDateKey}-${entry.location}`} className="day-detail-item">
+                          <h3>{toCityStateLabel(entry.location)}</h3>
+                          <ul>
+                            {entry.events.map((event, eventIdx) => (
+                              <li key={`${entry.location}-${event.title}-${eventIdx}`}>
+                                <strong>{eventTimeLabel(event, data.timeZone)}</strong>: {event.title}
+                                <br />
+                                <span className="event-evidence">
+                                  inferred from{" "}
+                                  <a href={event.mapsUrl} target="_blank" rel="noreferrer">
+                                    {event.inferredFrom}
+                                  </a>
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="friend-day-section">
+                    <h3>Friend schedules</h3>
+                    {!friendMonth?.ownSnapshotAvailable ? (
+                      <p className="settings-help">
+                        Open a month once to publish your snapshot and enable overlap comparisons.
+                      </p>
+                    ) : null}
+                    {selectedVisibleFriendSchedules.length === 0 ? (
+                      <p className="settings-help">
+                        No friend travel entries recorded for this date.
+                      </p>
+                    ) : (
+                      <div className="day-detail-list">
+                        {selectedVisibleFriendSchedules.map((friend) => (
+                          <article key={`${selectedDateKey}-${friend.id}`} className="day-detail-item">
+                            <h3>
+                              {friend.name}
+                              {friend.isStale ? <span className="friend-stale-tag">Stale snapshot</span> : null}
+                            </h3>
+                            <ul>
+                              {friend.dayLocations.map((locationEntry) => (
+                                <li key={`${friend.id}-${locationEntry.location}`}>
+                                  <strong>{toCityStateLabel(locationEntry.location)}</strong> ·{" "}
+                                  {locationEntry.events.length} event
+                                  {locationEntry.events.length === 1 ? "" : "s"}
+                                </li>
+                              ))}
+                            </ul>
+                            {friend.generatedAt ? (
+                              <p className="settings-help">
+                                Last updated {new Date(friend.generatedAt).toLocaleString()}
+                              </p>
+                            ) : null}
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                    {selectedPrivateFriends.length > 0 ? (
+                      <p className="settings-help">
+                        Hidden by privacy settings: {selectedPrivateFriends.map((friend) => friend.name).join(", ")}.
+                      </p>
+                    ) : null}
+                    {selectedNoDataFriends.length > 0 ? (
+                      <p className="settings-help">
+                        No snapshot for this date: {selectedNoDataFriends.map((friend) => friend.name).join(", ")}.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </dialog>
+            </div>
           ) : null}
+
           <p className="meta">
             Source timezone: <strong>{data.timeZone}</strong> · Generated by {data.generatedBy} ·
             Updated {new Date(data.generatedAt).toLocaleString()}

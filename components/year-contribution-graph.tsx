@@ -7,57 +7,18 @@ interface YearContributionGraphProps {
   settings: LoccalSettings;
   selectedDateKey?: string | null;
   onSelectDate?: (dateKey: string) => void;
-}
-
-interface ContributionCell {
-  date: Date;
-  dateKey: string;
-  inYear: boolean;
+  compact?: boolean;
 }
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAY_NUMBERS = Array.from({ length: 31 }, (_, i) => i + 1);
 
-function toDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+function toDateKey(year: number, month: number, day: number) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function startOfWeekMonday(date: Date) {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  const mondayIndex = (result.getDay() + 6) % 7;
-  result.setDate(result.getDate() - mondayIndex);
-  return result;
-}
-
-function endOfWeekSunday(date: Date) {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  const mondayIndex = (result.getDay() + 6) % 7;
-  result.setDate(result.getDate() + (6 - mondayIndex));
-  return result;
-}
-
-function buildCellsForYear(year: number) {
-  const jan1 = new Date(year, 0, 1);
-  const dec31 = new Date(year, 11, 31);
-  const start = startOfWeekMonday(jan1);
-  const end = endOfWeekSunday(dec31);
-
-  const cells: ContributionCell[] = [];
-  const cursor = new Date(start);
-  while (cursor <= end) {
-    const inYear = cursor.getFullYear() === year;
-    cells.push({
-      date: new Date(cursor),
-      dateKey: toDateKey(cursor),
-      inYear
-    });
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return cells;
+function daysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
 }
 
 export function YearContributionGraph({
@@ -65,96 +26,78 @@ export function YearContributionGraph({
   days,
   settings,
   selectedDateKey,
-  onSelectDate
+  onSelectDate,
+  compact
 }: YearContributionGraphProps) {
-  const cells = buildCellsForYear(year);
-  const weekCount = Math.ceil(cells.length / 7);
-  const weekColumns = Array.from({ length: weekCount }, (_, weekIndex) =>
-    cells.slice(weekIndex * 7, weekIndex * 7 + 7)
-  );
-
-  const monthPositions = new Map<number, number>();
-  for (let weekIndex = 0; weekIndex < weekColumns.length; weekIndex += 1) {
-    const week = weekColumns[weekIndex];
-    const firstInYear = week.find((cell) => cell.inYear);
-    if (!firstInYear) continue;
-    const month = firstInYear.date.getMonth();
-    if (!monthPositions.has(month)) {
-      monthPositions.set(month, weekIndex);
-    }
-  }
-
   return (
-    <section className="year-graph-card" aria-labelledby="year-graph-title">
+    <section className={`year-graph-card${compact ? " year-graph-compact" : ""}`} aria-labelledby="year-graph-title">
       <div className="year-graph-head">
         <div>
           <p className="eyebrow">Annual footprint</p>
-          <h2 id="year-graph-title">{year} Location Contribution Graph</h2>
+          <h2 id="year-graph-title">{year}</h2>
         </div>
       </div>
 
       <div className="year-graph-scroll">
-        <div className="year-graph-months" style={{ gridTemplateColumns: `repeat(${weekCount}, minmax(0, 1fr))` }}>
-          {MONTH_LABELS.map((label, month) => (
-            <span key={label} style={{ gridColumn: (monthPositions.get(month) ?? 0) + 1 }}>
-              {label}
-            </span>
+        <div className="year-grid-transposed" role="grid" aria-label={`Location graph for ${year}`}>
+          {/* Day number header row */}
+          <div className="year-grid-corner" />
+          {DAY_NUMBERS.map((d) => (
+            <div key={`hdr-${d}`} className="year-grid-day-hdr">
+              {d}
+            </div>
           ))}
-        </div>
-        <div className="year-graph-body">
-          <div className="year-graph-axis" aria-hidden="true">
-            <span className="year-graph-axis-mon">Mon</span>
-            <span className="year-graph-axis-sun">Sun</span>
-          </div>
-          <div className="year-graph-grid" role="grid" aria-label={`Location graph for ${year}`}>
-            {weekColumns.map((week, weekIndex) => (
-              <div key={`week-${weekIndex}`} className="year-graph-week" role="rowgroup">
-                {week.map((cell) => {
-                  const dayLocations = cell.inYear ? days[cell.dateKey] ?? [] : [];
-                  const hasHomeFallback = cell.inYear && dayLocations.length === 0 && Boolean(settings.homeLocation);
-                  const locationLabel = dayLocations[0]
-                    ? toCityStateLabel(dayLocations[0].location)
-                    : hasHomeFallback
-                      ? toCityStateLabel(settings.homeLocation)
-                      : "";
-                  const theme = locationLabel
-                    ? getCityTheme(locationLabel, settings, hasHomeFallback)
-                    : { background: "#eef2f6", textColor: "#98a2b3", icon: "" };
-                  const isSelected = selectedDateKey === cell.dateKey;
-                  const dateLabel = cell.date.toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric"
-                  });
-                  const tooltip = cell.inYear
-                    ? locationLabel
-                      ? `${dateLabel}: ${locationLabel}`
-                      : `${dateLabel}: no location`
-                    : "";
 
-                  return (
-                    <button
-                      key={cell.dateKey}
-                      type="button"
-                      className={`year-graph-cell${isSelected ? " selected" : ""}${cell.inYear ? "" : " out"}`}
-                      style={cell.inYear ? { background: theme.background, color: theme.textColor } : undefined}
-                      aria-label={tooltip || "Out of year range"}
-                      title={tooltip}
-                      data-tooltip={tooltip || undefined}
-                      onClick={() => {
-                        if (cell.inYear) onSelectDate?.(cell.dateKey);
-                      }}
-                      disabled={!cell.inYear}
-                      role="gridcell"
-                    >
-                      <span aria-hidden="true">{locationLabel ? theme.icon : ""}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+          {/* Month rows */}
+          {MONTH_LABELS.map((label, monthIdx) => {
+            const monthDays = daysInMonth(year, monthIdx);
+            return [
+              <div key={`month-${monthIdx}`} className="year-grid-month-label">
+                {label}
+              </div>,
+              ...DAY_NUMBERS.map((d) => {
+                const valid = d <= monthDays;
+                if (!valid) {
+                  return <div key={`${monthIdx}-${d}`} className="year-grid-cell-empty" />;
+                }
+                const dateKey = toDateKey(year, monthIdx, d);
+                const dayLocations = days[dateKey] ?? [];
+                const hasHomeFallback = dayLocations.length === 0 && Boolean(settings.homeLocation);
+                const locationLabel = dayLocations[0]
+                  ? toCityStateLabel(dayLocations[0].location)
+                  : hasHomeFallback
+                    ? toCityStateLabel(settings.homeLocation)
+                    : "";
+                const theme = locationLabel
+                  ? getCityTheme(locationLabel, settings, hasHomeFallback)
+                  : { background: "var(--surface-2)", textColor: "var(--muted)", icon: "" };
+                const isSelected = selectedDateKey === dateKey;
+                const dateLabel = new Date(year, monthIdx, d).toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric"
+                });
+                const tooltip = locationLabel
+                  ? `${dateLabel}: ${locationLabel}`
+                  : `${dateLabel}: no location`;
+
+                return (
+                  <button
+                    key={dateKey}
+                    type="button"
+                    className={`year-grid-cell${isSelected ? " selected" : ""}`}
+                    style={{ background: theme.background, color: theme.textColor }}
+                    aria-label={tooltip}
+                    title={tooltip}
+                    onClick={() => onSelectDate?.(dateKey)}
+                    role="gridcell"
+                  >
+                    <span aria-hidden="true">{locationLabel ? theme.icon : ""}</span>
+                  </button>
+                );
+              })
+            ];
+          })}
         </div>
       </div>
     </section>
