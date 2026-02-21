@@ -384,16 +384,51 @@ h2 {
   scrollbar-width: thin;
 }
 
-/* ── Transposed grid: days across top, months down side ── */
+/* ── GitHub-style grid: weekdays across top, weeks down side ── */
 
-.year-grid-transposed {
-  display: grid;
-  grid-template-columns: 2.4rem repeat(31, minmax(0, 1fr));
+.year-grid-github {
+  display: flex;
   gap: 2px;
 }
 
 .year-grid-corner {
-  /* empty top-left cell */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  width: 2.4rem;
+}
+
+/* Invisible spacer matching the day-hdr height */
+.year-grid-corner::before {
+  content: "";
+  display: block;
+  height: 1.1rem;
+  flex-shrink: 0;
+}
+
+.year-grid-month-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.3rem;
+  height: var(--yg-cell-size, 12px);
+  min-height: var(--yg-cell-size, 12px);
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.year-grid-weekday-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .year-grid-day-hdr {
@@ -401,23 +436,18 @@ h2 {
   font-weight: 600;
   text-align: center;
   color: var(--muted);
-  padding: 0 0 0.2rem;
-  letter-spacing: 0.01em;
-}
-
-.year-grid-month-label {
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--muted);
+  height: 1.1rem;
   display: flex;
-  align-items: center;
-  padding-right: 0.25rem;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 0.15rem;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
 }
 
 .year-grid-cell {
   aspect-ratio: 1;
+  width: 100%;
   border: 1px solid color-mix(in srgb, var(--line) 76%, var(--ink));
   border-radius: 0.2rem;
   padding: 0;
@@ -448,12 +478,21 @@ h2 {
 }
 
 .year-grid-cell-empty {
-  /* placeholder for days that don't exist in a given month */
+  aspect-ratio: 1;
+  width: 100%;
 }
 
 /* Compact variant for sidebar */
-.year-graph-compact .year-grid-transposed {
-  grid-template-columns: 2rem repeat(31, minmax(0, 1fr));
+.year-graph-compact .year-grid-github {
+  gap: 1px;
+}
+
+.year-graph-compact .year-grid-corner {
+  width: 2rem;
+  gap: 1px;
+}
+
+.year-graph-compact .year-grid-weekday-col {
   gap: 1px;
 }
 
@@ -462,7 +501,7 @@ h2 {
 }
 
 .year-graph-compact .year-grid-month-label {
-  font-size: 0.58rem;
+  font-size: 0.5rem;
 }
 
 .year-graph-compact .year-grid-cell {
@@ -1380,8 +1419,16 @@ h2 {
   }
 
   /* Year graph gets more room when stacked */
-  .year-graph-compact .year-grid-transposed {
-    grid-template-columns: 2.4rem repeat(31, minmax(0, 1fr));
+  .year-graph-compact .year-grid-github {
+    gap: 2px;
+  }
+
+  .year-graph-compact .year-grid-corner {
+    width: 2.4rem;
+    gap: 2px;
+  }
+
+  .year-graph-compact .year-grid-weekday-col {
     gap: 2px;
   }
 
@@ -1399,7 +1446,7 @@ h2 {
   }
 
   .year-graph-compact .year-grid-month-label {
-    font-size: 0.66rem;
+    font-size: 0.58rem;
   }
 }
 

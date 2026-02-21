@@ -10,15 +10,70 @@ interface YearContributionGraphProps {
   compact?: boolean;
 }
 
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const DAY_NUMBERS = Array.from({ length: 31 }, (_, i) => i + 1);
 
-function toDateKey(year: number, month: number, day: number) {
-  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+function toDateKey(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-function daysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate();
+interface WeekCell {
+  date: Date;
+  dateKey: string;
+}
+
+/** Build a grid of weeks (rows) × 7 weekdays (columns) for the given year. */
+function buildWeeks(year: number): WeekCell[][] {
+  const jan1 = new Date(year, 0, 1);
+  const dec31 = new Date(year, 11, 31);
+
+  // Start from the Sunday on or before Jan 1
+  const startDay = jan1.getDay(); // 0=Sun
+  const gridStart = new Date(year, 0, 1 - startDay);
+
+  // End on the Saturday on or after Dec 31
+  const endDay = dec31.getDay();
+  const gridEnd = new Date(year, 11, 31 + (6 - endDay));
+
+  const weeks: WeekCell[][] = [];
+  const cursor = new Date(gridStart);
+
+  while (cursor <= gridEnd) {
+    const week: WeekCell[] = [];
+    for (let dow = 0; dow < 7; dow++) {
+      week.push({
+        date: new Date(cursor),
+        dateKey: toDateKey(cursor),
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+
+  return weeks;
+}
+
+/** Determine month label for each week row (show label on first week that contains a day from that month). */
+function getMonthLabels(weeks: WeekCell[][], year: number): (string | null)[] {
+  const labels: (string | null)[] = new Array(weeks.length).fill(null);
+  const shown = new Set<number>();
+
+  for (let wi = 0; wi < weeks.length; wi++) {
+    for (const cell of weeks[wi]) {
+      if (cell.date.getFullYear() === year) {
+        const m = cell.date.getMonth();
+        if (!shown.has(m)) {
+          shown.add(m);
+          labels[wi] = MONTH_LABELS[m];
+          break;
+        }
+      }
+    }
+  }
+  return labels;
 }
 
 export function YearContributionGraph({
@@ -29,6 +84,9 @@ export function YearContributionGraph({
   onSelectDate,
   compact
 }: YearContributionGraphProps) {
+  const weeks = buildWeeks(year);
+  const monthLabels = getMonthLabels(weeks, year);
+
   return (
     <section className={`year-graph-card${compact ? " year-graph-compact" : ""}`} aria-labelledby="year-graph-title">
       <div className="year-graph-head">
@@ -39,29 +97,28 @@ export function YearContributionGraph({
       </div>
 
       <div className="year-graph-scroll">
-        <div className="year-grid-transposed" role="grid" aria-label={`Location graph for ${year}`}>
-          {/* Day number header row */}
+        <div className="year-grid-github" role="grid" aria-label={`Location graph for ${year}`}>
+          {/* Month labels column */}
           <div className="year-grid-corner" />
-          {DAY_NUMBERS.map((d) => (
-            <div key={`hdr-${d}`} className="year-grid-day-hdr">
-              {d}
+          {weeks.map((_, wi) => (
+            <div key={`ml-${wi}`} className="year-grid-month-label">
+              {monthLabels[wi] ?? ""}
             </div>
           ))}
 
-          {/* Month rows */}
-          {MONTH_LABELS.map((label, monthIdx) => {
-            const monthDays = daysInMonth(year, monthIdx);
-            return [
-              <div key={`month-${monthIdx}`} className="year-grid-month-label">
-                {label}
-              </div>,
-              ...DAY_NUMBERS.map((d) => {
-                const valid = d <= monthDays;
-                if (!valid) {
-                  return <div key={`${monthIdx}-${d}`} className="year-grid-cell-empty" />;
+          {/* Weekday columns */}
+          {WEEKDAY_LABELS.map((label, dow) => (
+            <div key={`col-${dow}`} className="year-grid-weekday-col">
+              <div className="year-grid-day-hdr">{label}</div>
+              {weeks.map((week, wi) => {
+                const cell = week[dow];
+                const inYear = cell.date.getFullYear() === year;
+
+                if (!inYear) {
+                  return <div key={`${wi}-${dow}`} className="year-grid-cell-empty" />;
                 }
-                const dateKey = toDateKey(year, monthIdx, d);
-                const dayLocations = days[dateKey] ?? [];
+
+                const dayLocations = days[cell.dateKey] ?? [];
                 const hasHomeFallback = dayLocations.length === 0 && Boolean(settings.homeLocation);
                 const locationLabel = dayLocations[0]
                   ? toCityStateLabel(dayLocations[0].location)
@@ -71,8 +128,8 @@ export function YearContributionGraph({
                 const theme = locationLabel
                   ? getCityTheme(locationLabel, settings, hasHomeFallback)
                   : { background: "var(--surface-2)", textColor: "var(--muted)", icon: "" };
-                const isSelected = selectedDateKey === dateKey;
-                const dateLabel = new Date(year, monthIdx, d).toLocaleDateString("en-US", {
+                const isSelected = selectedDateKey === cell.dateKey;
+                const dateLabel = cell.date.toLocaleDateString("en-US", {
                   weekday: "short",
                   month: "short",
                   day: "numeric"
@@ -83,21 +140,21 @@ export function YearContributionGraph({
 
                 return (
                   <button
-                    key={dateKey}
+                    key={cell.dateKey}
                     type="button"
                     className={`year-grid-cell${isSelected ? " selected" : ""}`}
                     style={{ background: theme.background, color: theme.textColor }}
                     aria-label={tooltip}
                     title={tooltip}
-                    onClick={() => onSelectDate?.(dateKey)}
+                    onClick={() => onSelectDate?.(cell.dateKey)}
                     role="gridcell"
                   >
                     <span aria-hidden="true">{locationLabel ? theme.icon : ""}</span>
                   </button>
                 );
-              })
-            ];
-          })}
+              })}
+            </div>
+          ))}
         </div>
       </div>
     </section>
