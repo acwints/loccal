@@ -19,60 +19,60 @@ export const DEFAULT_LOCCAL_SETTINGS: LoccalSettings = {
 export const DEFAULT_CITY_THEMES: Record<string, Required<CityTheme>> = {
   "san francisco, ca": {
     icon: "🌉",
-    background: "linear-gradient(145deg, #f8eecf, #f2d7a6)",
-    textColor: "#1f3f2a"
+    background: "linear-gradient(145deg, #ede9fe, #ddd6fe)",
+    textColor: "#3b0764"
   },
   "new york, ny": {
     icon: "🗽",
-    background: "linear-gradient(145deg, #dde7f5, #c5d4ea)",
-    textColor: "#1d3047"
+    background: "linear-gradient(145deg, #e0e7ff, #c7d2fe)",
+    textColor: "#1e1b4b"
   },
   "los angeles, ca": {
     icon: "🌴",
-    background: "linear-gradient(145deg, #fde7c7, #ffd2a1)",
-    textColor: "#4b2f1e"
+    background: "linear-gradient(145deg, #fce7f3, #f5d0fe)",
+    textColor: "#4a044e"
   },
   "chicago, il": {
     icon: "🏙️",
-    background: "linear-gradient(145deg, #e7ecf1, #d1d8e0)",
-    textColor: "#243447"
+    background: "linear-gradient(145deg, #e2e8f0, #cbd5e1)",
+    textColor: "#1e293b"
   },
   "seattle, wa": {
     icon: "☕",
-    background: "linear-gradient(145deg, #e1efe9, #c8ddd4)",
-    textColor: "#1f4f44"
+    background: "linear-gradient(145deg, #d1fae5, #a7f3d0)",
+    textColor: "#064e3b"
   },
   "miami, fl": {
     icon: "🌴",
-    background: "linear-gradient(145deg, #d8f4f0, #bfece6)",
-    textColor: "#0f4c47"
+    background: "linear-gradient(145deg, #cffafe, #a5f3fc)",
+    textColor: "#164e63"
   },
   "austin, tx": {
     icon: "🎸",
-    background: "linear-gradient(145deg, #f8ead6, #f1d9b9)",
-    textColor: "#4a3117"
+    background: "linear-gradient(145deg, #fef3c7, #fde68a)",
+    textColor: "#78350f"
   },
   "london, uk": {
     icon: "🏰",
-    background: "linear-gradient(145deg, #e9e6f6, #d9d3ef)",
-    textColor: "#2f2951"
+    background: "linear-gradient(145deg, #e8e4f0, #d4cde6)",
+    textColor: "#2e1065"
   },
   "paris, france": {
     icon: "🗼",
-    background: "linear-gradient(145deg, #f8e2e6, #f1ccd3)",
-    textColor: "#5a2834"
+    background: "linear-gradient(145deg, #ffe4e6, #fecdd3)",
+    textColor: "#4c0519"
   },
   "tokyo, japan": {
     icon: "🗼",
-    background: "linear-gradient(145deg, #f0e6ff, #e0d3ff)",
-    textColor: "#3a2469"
+    background: "linear-gradient(145deg, #ede9fe, #c4b5fd)",
+    textColor: "#2e1065"
   }
 };
 
 export const HOME_THEME: Required<CityTheme> = {
   icon: "🏡",
-  background: "linear-gradient(145deg, #e8f3e6, #d9e9d6)",
-  textColor: "#1e4a2b"
+  background: "linear-gradient(145deg, #f0ebff, #e4dbff)",
+  textColor: "#3b0764"
 };
 
 export function normalizeCityKey(cityLabel: string) {
@@ -114,8 +114,8 @@ export function getCityTheme(
     background:
       override?.background ??
       defaultTheme?.background ??
-      "linear-gradient(145deg, #f7f2e4, #ece4d1)",
-    textColor: override?.textColor ?? defaultTheme?.textColor ?? "#1d3a27"
+      "linear-gradient(145deg, #f0ecf9, #e4ddf3)",
+    textColor: override?.textColor ?? defaultTheme?.textColor ?? "#1e1b4b"
   };
 }
 
