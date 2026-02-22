@@ -561,7 +561,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 }
 
 .day-cell.other-month { background: var(--surface-2); }
-.day-cell.other-month .day-button { pointer-events: none; }
+.day-cell.other-month .day-button { pointer-events: none; opacity: 0.55; }
 .day-cell.other-month .day-label { color: var(--muted); }
 
 .day-button {
@@ -580,7 +580,46 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   background: transparent;
 }
 
-.day-button:hover { background: var(--accent-muted); }
+.day-button:hover { filter: brightness(0.96); }
+
+/* Inside themed day buttons, everything inherits the city theme colors */
+.day-button .day-label,
+.day-button .none-label,
+.day-button .overlap-note {
+  color: inherit;
+}
+
+.day-button .home-note,
+.day-button .extra {
+  color: inherit;
+  opacity: 0.6;
+}
+
+.day-button .none-label {
+  opacity: 0.4;
+}
+
+.day-button .day-status-chip {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: inherit;
+}
+
+.day-button .day-status-chip.overlap {
+  background: rgba(255, 255, 255, 0.55);
+  color: inherit;
+  font-weight: 600;
+}
+
+.day-button .city-pill {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: inherit;
+}
+
+.day-button .overlap-note {
+  opacity: 0.75;
+}
 
 .day-cell-head {
   display: flex;

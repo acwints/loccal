@@ -8,6 +8,7 @@ import {
 interface MonthGridProps {
   monthKey: string;
   days: Record<string, DayLocation[]>;
+  backfillDays?: Record<string, DayLocation[]>;
   settings: LoccalSettings;
   title?: string;
   onPrevMonth?: () => void;
@@ -46,10 +47,11 @@ function buildCalendarCells(monthKey: string): CalendarCell[] {
 
   for (let offset = firstWeekday - 1; offset >= 0; offset--) {
     const day = prevMonthDate - offset;
-    const key = `${prevMonthYear}-${String(prevMonthMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const dateKey = `${prevMonthYear}-${String(prevMonthMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     cells.push({
-      key: `prev-${key}`,
+      key: `prev-${dateKey}`,
       day,
+      dateKey,
       isCurrentMonth: false
     });
   }
@@ -70,6 +72,7 @@ function buildCalendarCells(monthKey: string): CalendarCell[] {
 export function MonthGrid({
   monthKey,
   days,
+  backfillDays,
   settings,
   title,
   onPrevMonth,
@@ -105,10 +108,13 @@ export function MonthGrid({
       <div className="month-grid">
         {calendarCells.map((cell) => {
           const { isCurrentMonth, dateKey, day, key } = cell;
-          const dayLocations = isCurrentMonth && dateKey ? days[dateKey] ?? [] : [];
-          const inferredCityStateLabels = isCurrentMonth
-            ? Array.from(new Set(dayLocations.map((entry) => toCityStateLabel(entry.location))))
+          const dayLocations = dateKey
+            ? (isCurrentMonth ? days[dateKey] : backfillDays?.[dateKey]) ?? []
             : [];
+          const inferredCityStateLabels =
+            dateKey
+              ? Array.from(new Set(dayLocations.map((entry) => toCityStateLabel(entry.location))))
+              : [];
           const hasHomeFallback =
             isCurrentMonth && inferredCityStateLabels.length === 0 && Boolean(settings.homeLocation);
           const displayLabels =
@@ -118,9 +124,11 @@ export function MonthGrid({
                 ? [toCityStateLabel(settings.homeLocation)]
                 : [];
           const primaryLabel = displayLabels[0] ?? "";
-          const theme = isCurrentMonth
-            ? getCityTheme(primaryLabel, settings, hasHomeFallback)
-            : { background: "var(--line)", textColor: "var(--muted)", icon: undefined };
+          const hasBackfillData = !isCurrentMonth && displayLabels.length > 0;
+          const theme =
+            isCurrentMonth || hasBackfillData
+              ? getCityTheme(primaryLabel, settings, hasHomeFallback)
+              : { background: "var(--surface-2)", textColor: "var(--muted)", icon: undefined };
           const isSelected = isCurrentMonth && dateKey === selectedDateKey;
           const overlap = isCurrentMonth && dateKey ? overlaps?.[dateKey] : undefined;
           const hasOverlap = Boolean(overlap);
@@ -157,24 +165,20 @@ export function MonthGrid({
                     </div>
                   ) : null}
                 </div>
-                {isCurrentMonth ? (
-                  displayLabels.length === 0 ? (
-                    <p className="none-label">&nbsp;</p>
-                  ) : (
-                    <div className="city-list">
-                      {displayLabels.slice(0, 3).map((cityLabel) => (
-                        <span key={`${dateKey}-${cityLabel}`} className="city-pill">
-                          {cityLabel}
-                        </span>
-                      ))}
-                      {displayLabels.length > 3 ? (
-                        <p className="extra">+{displayLabels.length - 3} more</p>
-                      ) : null}
-                      {hasHomeFallback ? <p className="home-note">Home default</p> : null}
-                    </div>
-                  )
-                ) : (
+                {displayLabels.length === 0 ? (
                   <p className="none-label">&nbsp;</p>
+                ) : (
+                  <div className="city-list">
+                    {displayLabels.slice(0, 3).map((cityLabel) => (
+                      <span key={`${dateKey}-${cityLabel}`} className="city-pill">
+                        {cityLabel}
+                      </span>
+                    ))}
+                    {displayLabels.length > 3 ? (
+                      <p className="extra">+{displayLabels.length - 3} more</p>
+                    ) : null}
+                    {hasHomeFallback ? <p className="home-note">Home default</p> : null}
+                  </div>
                 )}
                 {hasOverlap ? (
                   <p className="overlap-note">

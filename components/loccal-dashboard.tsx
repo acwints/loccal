@@ -254,6 +254,7 @@ export function LoccalDashboard() {
               <MonthGrid
                 monthKey={data.month}
                 days={data.days}
+                backfillDays={yearData?.days}
                 settings={settings}
                 title={monthLabel(month)}
                 onPrevMonth={() => goToMonth(-1)}
