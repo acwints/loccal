@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { LoginCard } from "@/components/login-card";
+import { PageHero } from "@/components/page-hero";
 import { UniversalHeader } from "@/components/universal-header";
 import { getAuthOptions } from "@/lib/auth";
 
@@ -16,19 +17,15 @@ export default async function PublicHomePage() {
     <>
       <UniversalHeader />
       <main className="signin-shell">
-        <section className="marketing-hero">
-          <p className="eyebrow">Calendar-Based Location Intelligence</p>
-          <h1>Your month at a glance, city by city.</h1>
-          <p>
-            Loccal reads your Google Calendar, infers where you are each day, and gives you a
-            clean monthly map with explainable event evidence.
-          </p>
-          <div className="marketing-links">
-            <Link href="#how-it-works" className="ghost-btn">
-              How it works
-            </Link>
-          </div>
-        </section>
+        <PageHero
+          eyebrow="Calendar-Based Location Intelligence"
+          title="Your month at a glance, city by city."
+          description="Loccal reads your Google Calendar, infers where you are each day, and gives you a clean monthly map with explainable event evidence."
+        >
+          <Link href="#how-it-works" className="ghost-btn">
+            How it works
+          </Link>
+        </PageHero>
 
         <LoginCard />
 

@@ -5,25 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 import { CitySearchInput } from "@/components/city-search-input";
 import { EmojiPicker } from "@/components/emoji-picker";
 import { GradientPicker } from "@/components/gradient-picker";
+import { PageHero } from "@/components/page-hero";
+import { fetchJson } from "@/lib/fetch-utils";
+import { titleCaseKey } from "@/lib/format-utils";
 import { useLoccalSettings } from "@/lib/use-loccal-settings";
 import {
   DEFAULT_CITY_THEMES,
   normalizeCityKey,
   toCityStateLabel
 } from "@/lib/user-settings";
-
-function titleCaseKey(normalized: string) {
-  return normalized
-    .split(",")
-    .map((segment) =>
-      segment
-        .trim()
-        .split(/\s+/)
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ")
-    )
-    .join(", ");
-}
 
 interface SocialPreferencesResponse {
   shareMode: "friends" | "private";
@@ -52,24 +42,9 @@ export function SettingsScreen() {
     setSocialLoading(true);
     setSocialError(null);
 
-    fetch("/api/social/preferences", { cache: "no-store" })
-      .then(async (response) => {
-        const payload = (await response.json().catch(() => null)) as
-          | SocialPreferencesResponse
-          | { error?: string }
-          | null;
-
-        if (!response.ok) {
-          const message =
-            payload && typeof payload === "object" && "error" in payload && payload.error
-              ? payload.error
-              : "Failed to load social preferences.";
-          throw new Error(message);
-        }
-
-        if (!canceled) {
-          setSocialPrefs(payload as SocialPreferencesResponse);
-        }
+    fetchJson<SocialPreferencesResponse>("/api/social/preferences")
+      .then((payload) => {
+        if (!canceled) setSocialPrefs(payload);
       })
       .catch((error: unknown) => {
         if (canceled) return;
@@ -104,28 +79,12 @@ export function SettingsScreen() {
     setSocialError(null);
 
     try {
-      const response = await fetch("/api/social/preferences", {
+      const payload = await fetchJson<SocialPreferencesResponse>("/api/social/preferences", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shareMode })
       });
-
-      const payload = (await response.json().catch(() => null)) as
-        | SocialPreferencesResponse
-        | { error?: string }
-        | null;
-
-      if (!response.ok) {
-        const message =
-          payload && typeof payload === "object" && "error" in payload && payload.error
-            ? payload.error
-            : "Failed to update sharing settings.";
-        throw new Error(message);
-      }
-
-      setSocialPrefs(payload as SocialPreferencesResponse);
+      setSocialPrefs(payload);
     } catch (error) {
       setSocialError(error instanceof Error ? error.message : "Failed to update sharing settings.");
     } finally {
@@ -135,14 +94,11 @@ export function SettingsScreen() {
 
   return (
     <main className="page-shell settings-shell">
-      <section className="settings-hero">
-        <p className="eyebrow">Preferences</p>
-        <h1>Settings</h1>
-        <p>
-          Customize day-cell visuals by city and set a default home location for days with no
-          inferred travel.
-        </p>
-      </section>
+      <PageHero
+        eyebrow="Preferences"
+        title="Settings"
+        description="Customize day-cell visuals by city and set a default home location for days with no inferred travel."
+      />
 
       {!ready ? (
         <section className="settings-card">
@@ -247,7 +203,7 @@ export function SettingsScreen() {
           </div>
         </div>
 
-        <div className="settings-actions">
+        <div className="btn-row">
           <button type="button" className="primary-btn" onClick={saveOverride}>
             Save override
           </button>

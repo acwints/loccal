@@ -3,47 +3,17 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { CardHeader } from "@/components/card-header";
+import { PageHero } from "@/components/page-hero";
+import { toMonthKey } from "@/lib/date-utils";
+import { fetchJson } from "@/lib/fetch-utils";
+import { initialsFromName } from "@/lib/format-utils";
 import type {
   FriendMonthResponse,
   FriendProfile,
   FriendRequestProfile,
   UserSearchResult
 } from "@/lib/social-types";
-
-function toMonthKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-async function fetchJson<T>(url: string, init?: RequestInit) {
-  const response = await fetch(url, {
-    cache: "no-store",
-    ...init
-  });
-
-  const payload = (await response.json().catch(() => null)) as T | { error?: string } | null;
-
-  if (!response.ok) {
-    const message =
-      payload && typeof payload === "object" && "error" in payload && payload.error
-        ? payload.error
-        : "Request failed.";
-    throw new Error(message);
-  }
-
-  return payload as T;
-}
-
-function initialsFromName(name: string, email: string) {
-  const trimmedName = name.trim();
-  if (trimmedName) {
-    return trimmedName
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? "")
-      .join("");
-  }
-  return email[0]?.toUpperCase() ?? "U";
-}
 
 function AvatarCell({
   name,
@@ -233,25 +203,22 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
 
   return (
     <main className="page-shell friends-shell">
-      <header className="friends-hero">
-        <div>
-          <p className="eyebrow">Network</p>
-          <h1>Friends</h1>
-          <p>
-            {userName
-              ? `${userName}, manage requests, discover people, and tune who can view your travel overlap graph.`
-              : "Manage requests, discover people, and tune who can view your travel overlap graph."}
-          </p>
-        </div>
-        <div className="friends-hero-actions">
-          <Link href="/dashboard" className="ghost-btn">
-            Back to dashboard
-          </Link>
-          <Link href="/settings" className="ghost-btn">
-            Sharing settings
-          </Link>
-        </div>
-      </header>
+      <PageHero
+        eyebrow="Network"
+        title="Friends"
+        description={
+          userName
+            ? `${userName}, manage requests, discover people, and tune who can view your travel overlap graph.`
+            : "Manage requests, discover people, and tune who can view your travel overlap graph."
+        }
+      >
+        <Link href="/dashboard" className="ghost-btn">
+          Back to dashboard
+        </Link>
+        <Link href="/settings" className="ghost-btn">
+          Sharing settings
+        </Link>
+      </PageHero>
 
       {networkLoading ? (
         <section className="friends-metrics">
@@ -298,13 +265,7 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
 
       <section className="friends-layout">
         <article className="friends-card friends-card-discover">
-          <div className="friends-card-head">
-            <div>
-              <p className="eyebrow">Discover</p>
-              <h2>Find and add friends</h2>
-            </div>
-            <p className="settings-help">Search by name or email.</p>
-          </div>
+          <CardHeader eyebrow="Discover" title="Find and add friends" description="Search by name or email." />
 
           <div className="social-search-row">
             <label htmlFor="friends-search" className="social-search-label">
@@ -391,12 +352,7 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
 
         <div className="friends-stack">
           <article className="friends-card">
-            <div className="friends-card-head">
-              <div>
-                <p className="eyebrow">Connected</p>
-                <h2>Friends ({friends.length})</h2>
-              </div>
-            </div>
+            <CardHeader eyebrow="Connected" title={`Friends (${friends.length})`} />
 
             {friends.length === 0 ? (
               <p className="settings-help">No friends yet. Send requests from Discover.</p>
@@ -427,12 +383,7 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
           </article>
 
           <article className="friends-card">
-            <div className="friends-card-head">
-              <div>
-                <p className="eyebrow">Queue</p>
-                <h2>Pending requests ({requests.length})</h2>
-              </div>
-            </div>
+            <CardHeader eyebrow="Queue" title={`Pending requests (${requests.length})`} />
 
             {requests.length === 0 ? (
               <p className="settings-help">No pending requests.</p>

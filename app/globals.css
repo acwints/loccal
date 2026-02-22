@@ -327,15 +327,13 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 .login-card,
 .hero,
 .month-grid-wrap,
-.marketing-hero,
+.page-hero,
 .marketing-card,
 .settings-card,
 .dashboard-insight-card,
 .year-graph-card,
-.friends-hero,
 .friends-card,
 .friends-metric-card,
-.settings-hero,
 .theme-preview-card,
 .day-modal {
   border: 1px solid var(--line);
@@ -344,14 +342,21 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   box-shadow: var(--shadow);
 }
 
-/* Marketing */
+/* Page Hero */
 
-.marketing-hero { padding: 0.85rem; }
-
-.marketing-links {
-  margin-top: 0.6rem;
+.page-hero {
+  padding: 0.75rem 0.85rem;
   display: flex;
-  gap: 0.4rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.page-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
 }
 
 .marketing-grid {
@@ -393,13 +398,6 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   gap: 0.75rem;
   align-items: flex-start;
   justify-content: space-between;
-}
-
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  justify-content: flex-end;
 }
 
 /* Month Grid */
@@ -866,14 +864,6 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   gap: 0.6rem;
 }
 
-.settings-hero {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--card);
-  box-shadow: var(--shadow);
-  padding: 0.75rem;
-}
-
 .settings-card {
   padding: 0.7rem;
   display: grid;
@@ -924,7 +914,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   box-shadow: 0 0 0 2px var(--accent-muted);
 }
 
-.settings-actions {
+.btn-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
@@ -988,23 +978,8 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   gap: 0.6rem;
 }
 
-.friends-hero,
 .friends-card {
   border-radius: 8px;
-}
-
-.friends-hero {
-  padding: 0.75rem;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.6rem;
-}
-
-.friends-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
 }
 
 .friends-metrics {
@@ -1033,7 +1008,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   gap: 0.45rem;
 }
 
-.friends-card-head {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -1053,7 +1028,8 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   font-weight: 500;
 }
 
-.social-list {
+.social-list,
+.override-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1061,7 +1037,8 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   gap: 0.3rem;
 }
 
-.social-item {
+.social-item,
+.override-item {
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--card);
@@ -1148,27 +1125,6 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 .friend-chip-warn {
   color: var(--danger);
   border-color: var(--danger);
-}
-
-/* Overrides */
-
-.override-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.override-item {
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--card);
-  padding: 0.4rem 0.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.4rem;
 }
 
 .override-city {
@@ -1448,7 +1404,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   .topbar-nav::-webkit-scrollbar { display: none; }
   .marketing-grid { grid-template-columns: 1fr; }
   .friends-metrics { grid-template-columns: 1fr; }
-  .friends-hero { flex-direction: column; }
+  .page-hero { flex-direction: column; }
   .modal-backdrop { padding: 0.35rem; }
   .day-modal { width: 100%; max-height: 90vh; border-radius: 8px; }
 }
@@ -1456,7 +1412,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 @media (max-width: 720px) {
   .signin-shell, .dashboard-shell, .page-shell { padding: 0.5rem 0.5rem 1.5rem; }
   .hero { flex-direction: column; }
-  .hero-actions { justify-content: flex-start; }
+  .page-hero-actions { justify-content: flex-start; }
   .weekdays { display: none; }
   .month-grid { grid-template-columns: 1fr; }
   .day-cell, .day-cell:nth-child(7n) { border-right: none; }

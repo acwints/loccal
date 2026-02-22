@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 
+import { initialsFromName } from "@/lib/format-utils";
+
 interface HeaderUser {
   name?: string | null;
   email?: string | null;
@@ -18,18 +20,6 @@ interface UniversalHeaderProps {
 
 type ThemeMode = "light" | "dark";
 const THEME_STORAGE_KEY = "loccal.theme";
-
-function initialsFromName(name?: string | null, email?: string | null) {
-  if (name && name.trim()) {
-    const parts = name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? "");
-    return parts.join("") || "U";
-  }
-  return email?.[0]?.toUpperCase() ?? "U";
-}
 
 export function UniversalHeader({ user }: UniversalHeaderProps) {
   const pathname = usePathname();

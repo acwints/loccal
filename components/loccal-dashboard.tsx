@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 import { MonthGrid } from "@/components/month-grid";
 import { YearContributionGraph } from "@/components/year-contribution-graph";
+import { formatDateLabel, monthLabel, toMonthKey } from "@/lib/date-utils";
+import { fetchJson } from "@/lib/fetch-utils";
 import type { InferredEvent } from "@/lib/loccal";
 import type { FriendMonthResponse } from "@/lib/social-types";
 import { useLoccalSettings } from "@/lib/use-loccal-settings";
@@ -25,62 +27,6 @@ interface YearApiResponse {
   generatedBy: string;
 }
 
-function toMonthKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function monthLabel(monthKey: string) {
-  const [year, month] = monthKey.split("-").map(Number);
-  return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric"
-  });
-}
-
-async function fetchMonth(month: string) {
-  const response = await fetch(`/api/loccal/month?month=${month}`, {
-    method: "GET",
-    cache: "no-store"
-  });
-
-  const payload = (await response.json()) as ApiResponse | { error: string };
-
-  if (!response.ok) {
-    throw new Error((payload as { error: string }).error || "Failed to fetch month.");
-  }
-
-  return payload as ApiResponse;
-}
-
-async function fetchFriendMonth(month: string) {
-  const response = await fetch(`/api/friends/month?month=${month}`, {
-    method: "GET",
-    cache: "no-store"
-  });
-  const payload = (await response.json()) as FriendMonthResponse | { error?: string };
-
-  if (!response.ok) {
-    throw new Error((payload as { error?: string }).error ?? "Failed to load friend month.");
-  }
-
-  return payload as FriendMonthResponse;
-}
-
-async function fetchYear(year: string) {
-  const response = await fetch(`/api/loccal/year?year=${year}`, {
-    method: "GET",
-    cache: "no-store"
-  });
-
-  const payload = (await response.json()) as YearApiResponse | { error: string };
-
-  if (!response.ok) {
-    throw new Error((payload as { error: string }).error || "Failed to fetch year.");
-  }
-
-  return payload as YearApiResponse;
-}
-
 export function LoccalDashboard() {
   const [month, setMonth] = useState(() => toMonthKey(new Date()));
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -100,7 +46,7 @@ export function LoccalDashboard() {
     let canceled = false;
 
     setLoading(true);
-    fetchMonth(month)
+    fetchJson<ApiResponse>(`/api/loccal/month?month=${month}`)
       .then((result) => {
         if (canceled) return;
         setData(result);
@@ -126,7 +72,7 @@ export function LoccalDashboard() {
     let canceled = false;
     setFriendMonthLoading(true);
 
-    fetchFriendMonth(month)
+    fetchJson<FriendMonthResponse>(`/api/friends/month?month=${month}`)
       .then((payload) => {
         if (canceled) return;
         setFriendMonth(payload);
@@ -149,7 +95,7 @@ export function LoccalDashboard() {
     let canceled = false;
     setYearLoading(true);
 
-    fetchYear(selectedYear)
+    fetchJson<YearApiResponse>(`/api/loccal/year?year=${selectedYear}`)
       .then((result) => {
         if (canceled) return;
         setYearData(result);
@@ -183,16 +129,6 @@ export function LoccalDashboard() {
     const nextDate = new Date(year, monthNum - 1 + offset, 1);
     const nextMonth = toMonthKey(nextDate);
     setMonth(nextMonth);
-  }
-
-  function formatDateLabel(dateKey: string) {
-    const [year, monthNum, day] = dateKey.split("-").map(Number);
-    return new Date(year, monthNum - 1, day).toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric"
-    });
   }
 
   const selectedDayLocations =

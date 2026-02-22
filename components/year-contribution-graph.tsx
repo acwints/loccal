@@ -1,5 +1,6 @@
 import React from "react";
 import { SectionToolbar } from "@/components/section-toolbar";
+import { toDateKey } from "@/lib/date-utils";
 import type { DayLocation } from "@/lib/loccal";
 import { getCityTheme, toCityStateLabel, type LoccalSettings } from "@/lib/user-settings";
 
@@ -14,13 +15,6 @@ interface YearContributionGraphProps {
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function toDateKey(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
 
 interface WeekCell {
   date: Date;
