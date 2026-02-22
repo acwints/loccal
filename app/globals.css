@@ -92,7 +92,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 }
 
 .topbar-inner {
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0.5rem 1rem;
   display: grid;
@@ -163,7 +163,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   justify-self: end;
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 1.5rem;
 }
 
 /* Avatar */
@@ -443,7 +443,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 .year-grid-github {
   --yg-cell: 13px;
   display: grid;
-  grid-template-columns: 2.4rem repeat(7, var(--yg-cell));
+  grid-template-columns: 2.4rem repeat(7, calc(var(--yg-cell) * 2));
   gap: 2px;
 }
 
@@ -478,7 +478,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 }
 
 .year-grid-cell {
-  aspect-ratio: 1;
+  aspect-ratio: 2 / 1;
   border: 1px solid var(--line);
   border-radius: 2px;
   padding: 0;
@@ -508,11 +508,11 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   z-index: 2;
 }
 
-.year-grid-cell-empty { aspect-ratio: 1; }
+.year-grid-cell-empty { aspect-ratio: 2 / 1; }
 
 .year-graph-compact .year-grid-github {
   --yg-cell: 11px;
-  grid-template-columns: 2rem repeat(7, var(--yg-cell));
+  grid-template-columns: 2rem repeat(7, calc(var(--yg-cell) * 2));
   gap: 1px;
 }
 
@@ -1394,8 +1394,8 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 /* Theme Toggle */
 
 .theme-toggle-btn {
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 30px;
+  height:30px;
   border-radius: 5px;
   border: 1px solid var(--line);
   background: var(--surface-2);
@@ -1428,7 +1428,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 
   .year-graph-compact .year-grid-github {
     --yg-cell: 13px;
-    grid-template-columns: 2.4rem repeat(7, var(--yg-cell));
+    grid-template-columns: 2.4rem repeat(7, calc(var(--yg-cell) * 2));
     gap: 2px;
   }
   .year-graph-compact .year-grid-cell { font-size: 0.55rem; border-radius: 2px; }

@@ -177,7 +177,6 @@ export function MonthGrid({
                     {displayLabels.length > 3 ? (
                       <p className="extra">+{displayLabels.length - 3} more</p>
                     ) : null}
-                    {hasHomeFallback ? <p className="home-note">Home default</p> : null}
                   </div>
                 )}
                 {hasOverlap ? (
