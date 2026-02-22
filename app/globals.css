@@ -271,7 +271,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 .signin-shell,
 .dashboard-shell {
   margin: 0 auto;
-  padding: 0.75rem 1rem 2rem;
+  padding: 1.5rem;
 }
 
 /* Buttons */
@@ -405,7 +405,6 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 /* Month Grid */
 
 .month-grid-wrap {
-  margin-top: 0.6rem;
   overflow: hidden;
 }
 
@@ -462,7 +461,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 .year-grid-github {
   --yg-cell: 13px;
   display: grid;
-  grid-template-columns: 2.4rem repeat(7, calc(var(--yg-cell) * 2));
+  grid-template-columns: 2.4rem repeat(7, calc(var(--yg-cell) * 4));
   gap: 2px;
 }
 
@@ -497,7 +496,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 }
 
 .year-grid-cell {
-  aspect-ratio: 2 / 1;
+  aspect-ratio: 4 / 1;
   border: 1px solid var(--line);
   border-radius: 2px;
   padding: 0;
@@ -527,11 +526,11 @@ p, .meta, .status, .settings-help { color: var(--muted); }
   z-index: 2;
 }
 
-.year-grid-cell-empty { aspect-ratio: 2 / 1; }
+.year-grid-cell-empty { aspect-ratio: 4 / 1; }
 
 .year-graph-compact .year-grid-github {
   --yg-cell: 11px;
-  grid-template-columns: 2rem repeat(7, calc(var(--yg-cell) * 2));
+  grid-template-columns: 2rem repeat(7, calc(var(--yg-cell) * 4));
   gap: 1px;
 }
 
@@ -1447,7 +1446,7 @@ p, .meta, .status, .settings-help { color: var(--muted); }
 
   .year-graph-compact .year-grid-github {
     --yg-cell: 13px;
-    grid-template-columns: 2.4rem repeat(7, calc(var(--yg-cell) * 2));
+    grid-template-columns: 2.4rem repeat(7, calc(var(--yg-cell) * 4));
     gap: 2px;
   }
   .year-graph-compact .year-grid-cell { font-size: 0.55rem; border-radius: 2px; }
