@@ -1,3 +1,4 @@
+import { SectionToolbar } from "@/components/section-toolbar";
 import type { DayLocation } from "@/lib/loccal";
 import {
   getCityTheme,
@@ -86,17 +87,14 @@ export function MonthGrid({
   return (
     <div className="month-grid-wrap">
       {title ? (
-        <div className="month-grid-toolbar">
-          <h2>{title}</h2>
-          <div className="month-grid-toolbar-actions">
-            <button type="button" className="ghost-btn" onClick={onPrevMonth}>
-              Previous
-            </button>
-            <button type="button" className="ghost-btn" onClick={onNextMonth}>
-              Next
-            </button>
-          </div>
-        </div>
+        <SectionToolbar title={title}>
+          <button type="button" className="ghost-btn" onClick={onPrevMonth}>
+            Previous
+          </button>
+          <button type="button" className="ghost-btn" onClick={onNextMonth}>
+            Next
+          </button>
+        </SectionToolbar>
       ) : null}
       <div className="weekdays">
         {WEEKDAYS.map((weekday) => (

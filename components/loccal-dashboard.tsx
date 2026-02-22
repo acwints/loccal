@@ -250,9 +250,9 @@ export function LoccalDashboard() {
         <div className="dashboard-split">
           <div className="dashboard-split-main">
             <div className="month-grid-wrap">
-              <div className="month-grid-toolbar">
+              <div className="section-toolbar">
                 <div className="sk" style={{ width: 140, height: 18 }} />
-                <div className="month-grid-toolbar-actions">
+                <div className="section-toolbar-actions">
                   <div className="sk" style={{ width: 64, height: 28, borderRadius: 6 }} />
                   <div className="sk" style={{ width: 48, height: 28, borderRadius: 6 }} />
                 </div>

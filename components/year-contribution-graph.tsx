@@ -1,4 +1,5 @@
 import React from "react";
+import { SectionToolbar } from "@/components/section-toolbar";
 import type { DayLocation } from "@/lib/loccal";
 import { getCityTheme, toCityStateLabel, type LoccalSettings } from "@/lib/user-settings";
 
@@ -57,23 +58,30 @@ function buildWeeks(year: number): WeekCell[][] {
   return weeks;
 }
 
-/** Determine month label for each week row (show label on first week that contains a day from that month). */
+/** Determine month label for each week row, centered vertically within the month's span. */
 function getMonthLabels(weeks: WeekCell[][], year: number): (string | null)[] {
   const labels: (string | null)[] = new Array(weeks.length).fill(null);
-  const shown = new Set<number>();
+  const monthRanges = new Map<number, { first: number; last: number }>();
 
   for (let wi = 0; wi < weeks.length; wi++) {
     for (const cell of weeks[wi]) {
       if (cell.date.getFullYear() === year) {
         const m = cell.date.getMonth();
-        if (!shown.has(m)) {
-          shown.add(m);
-          labels[wi] = MONTH_LABELS[m];
-          break;
+        const range = monthRanges.get(m);
+        if (!range) {
+          monthRanges.set(m, { first: wi, last: wi });
+        } else {
+          range.last = wi;
         }
       }
     }
   }
+
+  for (const [m, range] of monthRanges) {
+    const mid = Math.floor((range.first + range.last) / 2);
+    labels[mid] = MONTH_LABELS[m];
+  }
+
   return labels;
 }
 
@@ -90,12 +98,7 @@ export function YearContributionGraph({
 
   return (
     <section className={`year-graph-card${compact ? " year-graph-compact" : ""}`} aria-labelledby="year-graph-title">
-      <div className="year-graph-head">
-        <div>
-          <p className="eyebrow">Annual footprint</p>
-          <h2 id="year-graph-title">{year}</h2>
-        </div>
-      </div>
+      <SectionToolbar title={`Annual footprint · ${year}`} titleId="year-graph-title" />
 
       <div className="year-graph-scroll">
         <div className="year-grid-github" role="grid" aria-label={`Location graph for ${year}`}>
