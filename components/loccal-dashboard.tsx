@@ -233,24 +233,59 @@ export function LoccalDashboard() {
     return `${formatTime(event.startIso, timeZone)} - ${formatTime(event.endIso, timeZone)}`;
   }
 
+  const showSkeleton = !data && loading;
+
   return (
     <main className="dashboard-shell">
-      {loading ? <p className="status">Loading month...</p> : null}
-      {!settingsReady ? <p className="status">Loading settings...</p> : null}
       {error ? <p className="error">{error}</p> : null}
       {data?.socialSnapshotSaved === false ? (
         <p className="error">
           Your calendar loaded, but social snapshot sync failed. Friend overlaps may be stale.
         </p>
       ) : null}
-      {friendMonthLoading ? <p className="status">Loading friend schedule overlaps...</p> : null}
       {friendMonthError ? <p className="error">{friendMonthError}</p> : null}
       {yearError ? <p className="error">{yearError}</p> : null}
+
+      {showSkeleton ? (
+        <div className="dashboard-split">
+          <div className="dashboard-split-main">
+            <div className="month-grid-wrap">
+              <div className="month-grid-toolbar">
+                <div className="sk" style={{ width: 140, height: 18 }} />
+                <div className="month-grid-toolbar-actions">
+                  <div className="sk" style={{ width: 64, height: 28, borderRadius: 6 }} />
+                  <div className="sk" style={{ width: 48, height: 28, borderRadius: 6 }} />
+                </div>
+              </div>
+              <div className="weekdays">
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                  <div key={d} className="weekday-cell">{d}</div>
+                ))}
+              </div>
+              <div className="month-grid">
+                {Array.from({ length: 35 }, (_, i) => (
+                  <div key={i} className="day-cell" style={{ padding: "0.4rem" }}>
+                    <div className="sk" style={{ width: 18, height: 14, marginBottom: 6 }} />
+                    <div className="sk" style={{ width: "70%", height: 10, marginBottom: 4 }} />
+                    <div className="sk" style={{ width: "50%", height: 10 }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="dashboard-split-side">
+            <div className="year-graph-card">
+              <div className="sk" style={{ width: 120, height: 16, marginBottom: 8 }} />
+              <div className="sk" style={{ width: "100%", height: 140, borderRadius: 4 }} />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {data ? (
         <>
           <div className="dashboard-split">
-            <div className="dashboard-split-main">
+            <div className={`dashboard-split-main${loading ? " sk-grid-loading" : ""}`}>
               <MonthGrid
                 monthKey={data.month}
                 days={data.days}
@@ -278,9 +313,12 @@ export function LoccalDashboard() {
                   }
                   compact
                 />
-              ) : yearLoading ? (
-                <p className="status">Loading year...</p>
-              ) : null}
+              ) : (
+                <div className="year-graph-card">
+                  <div className="sk" style={{ width: 120, height: 16, marginBottom: 8 }} />
+                  <div className="sk" style={{ width: "100%", height: 140, borderRadius: 4 }} />
+                </div>
+              )}
             </div>
           </div>
 

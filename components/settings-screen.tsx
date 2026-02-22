@@ -144,7 +144,13 @@ export function SettingsScreen() {
         </p>
       </section>
 
-      {!ready ? <p className="status">Loading settings…</p> : null}
+      {!ready ? (
+        <section className="settings-card">
+          <div className="sk" style={{ width: 120, height: 16, marginBottom: 10 }} />
+          <div className="sk" style={{ width: "60%", height: 12, marginBottom: 16 }} />
+          <div className="sk" style={{ width: "100%", height: 36, borderRadius: 6 }} />
+        </section>
+      ) : null}
 
       <section className="settings-card">
         <h2>Home Location</h2>
@@ -163,7 +169,12 @@ export function SettingsScreen() {
         <p className="settings-help">
           Control whether friends can view your saved travel snapshots and overlap dates.
         </p>
-        {socialLoading ? <p className="status">Loading sharing preferences…</p> : null}
+        {socialLoading ? (
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <div className="sk" style={{ width: 120, height: 32, borderRadius: 6 }} />
+            <div className="sk" style={{ width: 80, height: 32, borderRadius: 6 }} />
+          </div>
+        ) : null}
         {socialError ? <p className="error">{socialError}</p> : null}
         {socialPrefs ? (
           <>

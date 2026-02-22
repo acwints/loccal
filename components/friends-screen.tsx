@@ -253,36 +253,47 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
         </div>
       </header>
 
-      <section className="friends-metrics">
-        <article className="friends-metric-card">
-          <p className="eyebrow">Mutual friends</p>
-          <h2>{friends.length}</h2>
-          <p>People whose schedules can overlap with yours.</p>
-        </article>
-        <article className="friends-metric-card">
-          <p className="eyebrow">Pending requests</p>
-          <h2>{requests.length}</h2>
-          <p>Incoming requests waiting for your decision.</p>
-        </article>
-        <article className="friends-metric-card">
-          <p className="eyebrow">Networked overlaps</p>
-          <h2>{overlapDayCount}</h2>
-          <p>Days this month where at least one friend is in the same city.</p>
-        </article>
-        <article className="friends-metric-card">
-          <p className="eyebrow">Active friends</p>
-          <h2>{activeFriendCount}</h2>
-          <p>Friends currently sharing travel snapshots with you.</p>
-        </article>
-      </section>
+      {networkLoading ? (
+        <section className="friends-metrics">
+          {Array.from({ length: 4 }, (_, i) => (
+            <article key={i} className="friends-metric-card">
+              <div className="sk" style={{ width: 80, height: 10, marginBottom: 6 }} />
+              <div className="sk" style={{ width: 32, height: 22, marginBottom: 6 }} />
+              <div className="sk" style={{ width: "90%", height: 10 }} />
+            </article>
+          ))}
+        </section>
+      ) : (
+        <section className="friends-metrics">
+          <article className="friends-metric-card">
+            <p className="eyebrow">Mutual friends</p>
+            <h2>{friends.length}</h2>
+            <p>People whose schedules can overlap with yours.</p>
+          </article>
+          <article className="friends-metric-card">
+            <p className="eyebrow">Pending requests</p>
+            <h2>{requests.length}</h2>
+            <p>Incoming requests waiting for your decision.</p>
+          </article>
+          <article className="friends-metric-card">
+            <p className="eyebrow">Networked overlaps</p>
+            <h2>{overlapDayCount}</h2>
+            <p>Days this month where at least one friend is in the same city.</p>
+          </article>
+          <article className="friends-metric-card">
+            <p className="eyebrow">Active friends</p>
+            <h2>{activeFriendCount}</h2>
+            <p>Friends currently sharing travel snapshots with you.</p>
+          </article>
+        </section>
+      )}
 
-      {privateFriendCount + staleFriendCount > 0 ? (
+      {!networkLoading && privateFriendCount + staleFriendCount > 0 ? (
         <p className="settings-help">
           Attention: {privateFriendCount} private + {staleFriendCount} stale friend snapshots.
         </p>
       ) : null}
 
-      {networkLoading ? <p className="status">Loading network...</p> : null}
       {networkError ? <p className="error">{networkError}</p> : null}
 
       <section className="friends-layout">
@@ -308,7 +319,22 @@ export function FriendsScreen({ userName }: { userName?: string | null }) {
             />
           </div>
 
-          {searchLoading ? <p className="status">Searching users...</p> : null}
+          {searchLoading ? (
+            <ul className="social-list">
+              {Array.from({ length: 3 }, (_, i) => (
+                <li key={i} className="social-item">
+                  <div className="social-person">
+                    <div className="sk sk-rounded" style={{ width: 36, height: 36, flexShrink: 0 }} />
+                    <div>
+                      <div className="sk" style={{ width: 100, height: 12, marginBottom: 6 }} />
+                      <div className="sk" style={{ width: 140, height: 10 }} />
+                    </div>
+                  </div>
+                  <div className="sk" style={{ width: 64, height: 28, borderRadius: 6 }} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {searchError ? <p className="error">{searchError}</p> : null}
           {searchQuery.trim().length >= 2 && !searchLoading && searchResults.length === 0 ? (
             <p className="settings-help">No matching users found.</p>
