@@ -224,8 +224,7 @@ export function LoccalDashboard() {
             <div className={`dashboard-split-main${loading ? " sk-grid-loading" : ""}`}>
               <MonthGrid
                 monthKey={data.month}
-                days={data.days}
-                backfillDays={yearData?.days}
+                days={{ ...yearData?.days, ...data.days }}
                 settings={settings}
                 title={monthLabel(month)}
                 onPrevMonth={() => goToMonth(-1)}

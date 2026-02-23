@@ -9,7 +9,6 @@ import {
 interface MonthGridProps {
   monthKey: string;
   days: Record<string, DayLocation[]>;
-  backfillDays?: Record<string, DayLocation[]>;
   settings: LoccalSettings;
   title?: string;
   onPrevMonth?: () => void;
@@ -31,8 +30,7 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 interface CalendarCell {
   key: string;
   day: number;
-  dateKey?: string;
-  isCurrentMonth: boolean;
+  dateKey: string;
 }
 
 function buildCalendarCells(monthKey: string): CalendarCell[] {
@@ -52,8 +50,7 @@ function buildCalendarCells(monthKey: string): CalendarCell[] {
     cells.push({
       key: `prev-${dateKey}`,
       day,
-      dateKey,
-      isCurrentMonth: false
+      dateKey
     });
   }
 
@@ -62,9 +59,25 @@ function buildCalendarCells(monthKey: string): CalendarCell[] {
     cells.push({
       key: dateKey,
       day,
-      dateKey,
-      isCurrentMonth: true
+      dateKey
     });
+  }
+
+  // Fill trailing cells from next month to complete the last row
+  const remainder = cells.length % 7;
+  if (remainder > 0) {
+    const nextMonth = new Date(year, month, 1);
+    const nextMonthYear = nextMonth.getFullYear();
+    const nextMonthNum = nextMonth.getMonth() + 1;
+    const trailingCount = 7 - remainder;
+    for (let day = 1; day <= trailingCount; day++) {
+      const dateKey = `${nextMonthYear}-${String(nextMonthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      cells.push({
+        key: `next-${dateKey}`,
+        day,
+        dateKey
+      });
+    }
   }
 
   return cells;
@@ -73,7 +86,6 @@ function buildCalendarCells(monthKey: string): CalendarCell[] {
 export function MonthGrid({
   monthKey,
   days,
-  backfillDays,
   settings,
   title,
   onPrevMonth,
@@ -105,16 +117,13 @@ export function MonthGrid({
       </div>
       <div className="month-grid">
         {calendarCells.map((cell) => {
-          const { isCurrentMonth, dateKey, day, key } = cell;
-          const dayLocations = dateKey
-            ? (isCurrentMonth ? days[dateKey] : backfillDays?.[dateKey]) ?? []
-            : [];
-          const inferredCityStateLabels =
-            dateKey
-              ? Array.from(new Set(dayLocations.map((entry) => toCityStateLabel(entry.location))))
-              : [];
+          const { dateKey, day, key } = cell;
+          const dayLocations = days[dateKey] ?? [];
+          const inferredCityStateLabels = Array.from(
+            new Set(dayLocations.map((entry) => toCityStateLabel(entry.location)))
+          );
           const hasHomeFallback =
-            isCurrentMonth && inferredCityStateLabels.length === 0 && Boolean(settings.homeLocation);
+            inferredCityStateLabels.length === 0 && Boolean(settings.homeLocation);
           const displayLabels =
             inferredCityStateLabels.length > 0
               ? inferredCityStateLabels
@@ -122,46 +131,35 @@ export function MonthGrid({
                 ? [toCityStateLabel(settings.homeLocation)]
                 : [];
           const primaryLabel = displayLabels[0] ?? "";
-          const hasBackfillData = !isCurrentMonth && displayLabels.length > 0;
-          const theme =
-            isCurrentMonth || hasBackfillData
-              ? getCityTheme(primaryLabel, settings, hasHomeFallback)
-              : { background: "var(--surface-2)", textColor: "var(--muted)", icon: undefined };
-          const isSelected = isCurrentMonth && dateKey === selectedDateKey;
-          const overlap = isCurrentMonth && dateKey ? overlaps?.[dateKey] : undefined;
+          const theme = getCityTheme(primaryLabel, settings, hasHomeFallback);
+          const isSelected = dateKey === selectedDateKey;
+          const overlap = overlaps?.[dateKey];
           const hasOverlap = Boolean(overlap);
 
           return (
             <article
               key={key}
-              className={`day-cell${isSelected ? " selected" : ""}${hasOverlap ? " overlap" : ""}${
-                isCurrentMonth ? "" : " other-month"
-              }`}
+              className={`day-cell${isSelected ? " selected" : ""}${hasOverlap ? " overlap" : ""}`}
             >
               <button
                 type="button"
                 className="day-button"
                 aria-pressed={isSelected}
                 onClick={() => {
-                  if (isCurrentMonth && dateKey) {
-                    onSelectDate?.(dateKey);
-                  }
+                  onSelectDate?.(dateKey);
                 }}
-                disabled={!isCurrentMonth}
                 style={{
                   background: theme.background,
                   color: theme.textColor,
-                  cursor: isCurrentMonth ? "pointer" : "default"
+                  cursor: "pointer"
                 }}
               >
                 <div className="day-cell-head">
                   <div className="day-label">{day}</div>
-                  {isCurrentMonth ? (
-                    <div className="day-status-stack">
-                      {hasHomeFallback ? <span className="day-status-chip">Home</span> : null}
-                      {hasOverlap ? <span className="day-status-chip overlap">Match</span> : null}
-                    </div>
-                  ) : null}
+                  <div className="day-status-stack">
+                    {hasHomeFallback ? <span className="day-status-chip">Home</span> : null}
+                    {hasOverlap ? <span className="day-status-chip overlap">Match</span> : null}
+                  </div>
                 </div>
                 {displayLabels.length === 0 ? (
                   <p className="none-label">&nbsp;</p>
