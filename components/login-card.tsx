@@ -1,8 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 
 export function LoginCard() {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function login() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try { await signIn("google"); }
+    catch { setError("Sign-in could not start. Check your connection and try again."); }
+    finally { setBusy(false); }
+  }
   return (
     <section className="login-card">
       <p className="eyebrow">Loccal</p>
@@ -13,11 +24,14 @@ export function LoginCard() {
       </p>
       <button
         type="button"
-        onClick={() => signIn("google")}
+        onClick={login}
+        disabled={busy}
+        aria-busy={busy}
         className="primary-btn"
       >
-        Continue with Google
+        {busy ? "Connecting…" : "Continue with Google"}
       </button>
+      {error && <p role="alert">{error}</p>}
     </section>
   );
 }
