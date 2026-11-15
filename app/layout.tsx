@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import { preload } from "react-dom";
 
+import "@/app/fonts.css";
 import "@/app/globals.css";
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-  variable: "--font-sans"
-});
 
 export const metadata: Metadata = {
   title: "Loccal",
@@ -20,8 +14,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Same preload next/font/google emitted: only the latin slice (latin-ext loads on demand).
+  preload("/fonts/dm-sans-latin.b228458c.woff2", {
+    as: "font",
+    type: "font/woff2",
+    crossOrigin: ""
+  });
+
   return (
-    <html lang="en" className={dmSans.variable}>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

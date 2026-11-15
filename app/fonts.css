@@ -1,0 +1,50 @@
+/*
+ * Self-hosted DM Sans, replacing next/font/google.
+ *
+ * Built from the exact files next/font/google downloaded (DM Sans variable,
+ * Google's "latin" + "latin-ext" slices) with fontTools:
+ *   - wght axis: dropped the masters below the default (100..400). The site renders
+ *     400/500/600 only (<strong>/<h*> at 700 resolve to the 600 face via font-weight: 400 600).
+ *     The 400..1000 side is kept untouched: re-baking a 600 max master (varLib.instancer
+ *     wght=400:600) saves ~2.5 KB more but re-rounds outlines and changes pixels.
+ *   - unused OpenType features dropped (kept kern, liga, calt, ccmp, locl, mark, mkmk)
+ *   - no hinting (the Google files had none); post glyph names kept (dropping them
+ *     changed Chromium rasterisation in testing)
+ *   - same unicode-range split as Google, so latin-ext is still only fetched when needed
+ * Rendering verified pixel-identical against the Google files in Chromium.
+ * File names carry a content hash; next.config.ts serves /fonts/* as immutable.
+ */
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/dm-sans-ext.88fed20b.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/dm-sans-latin.b228458c.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Metric-matched fallback, identical to what next/font/google generated. */
+@font-face {
+  font-family: "DM Sans Fallback";
+  src: local("Arial");
+  ascent-override: 94.9%;
+  descent-override: 29.66%;
+  line-gap-override: 0%;
+  size-adjust: 104.53%;
+}
+
+:root {
+  --font-sans: "DM Sans", "DM Sans Fallback";
+}
