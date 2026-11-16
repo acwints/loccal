@@ -1,0 +1,5 @@
+Initial iPhone beta.
+
+Test Google Calendar sign-in, month navigation and day details, friend requests and overlaps, settings, and schedule sharing.
+
+Requires a Google Calendar account and an internet connection. Live Google sign-in and physical-device behavior remain to be validated by internal testers.

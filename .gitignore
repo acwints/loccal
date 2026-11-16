@@ -10,3 +10,12 @@ pnpm-debug.log*
 .DS_Store
 .vercel
 .env*.local
+native/shell/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/capacitor.plugins.json
+ios/App/CapApp-SPM/.build/
+ios/App/Pods/
+ios/DerivedData/
+ios/build/
+ios/**/xcuserdata/

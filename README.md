@@ -27,6 +27,52 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Mobile
+
+Loccal includes an installable mobile web app using the same Google sign-in and backend as the website. Deploy over HTTPS, then:
+
+- iPhone: open in Safari, tap Share, then **Add to Home Screen**.
+- Android: open in Chrome and choose **Install app** or **Add to Home screen** from its menu.
+
+The phone layout includes Calendar, Friends, and Settings tabs, a compact month grid, and day details in a bottom sheet. Tap a day to read full city names and friend matches. Calendar and friend data require a connection; only a static reconnect page is cached. The service worker runs in production, so use `npm run build` and `npm start` to check offline behavior locally. Run `npm run test:mobile` for the worker checks.
+
+## iPhone app
+
+The `ios/` Xcode project packages Calendar, Friends, and Settings in a Capacitor shell. It loads the existing production website at `https://loccal-web.vercel.app`; the Next.js server and database remain the backend.
+
+```bash
+npm ci
+npm run ios:sync
+npm run ios:open
+```
+
+In Xcode, choose your signing team and an iPhone, then Run. The bundle ID is `app.loccal.ios`. For a local iOS Simulator build, set `LOCCAL_APP_URL=http://localhost:3000 npm run ios:sync` while the local web server runs. Run `npm run ios:sync` without the override again before distributing.
+
+Google sign-in opens an `ASWebAuthenticationSession`. After the usual web OAuth callback, a 60-second encrypted ticket bound to the initiating app's HttpOnly verifier cookie transfers the session into the app. The ticket uses a separate encryption context from normal sessions. The verifier is removed after successful redemption. No new Google OAuth client is needed; keep the existing HTTPS `/api/auth/callback/google` redirect configured.
+
+Deploy the updated Next.js app before using the production iPhone shell: it needs `/mobile/sign-in`, `/mobile/complete`, and `/api/mobile/*`. Set `NEXTAUTH_URL` to the exact app origin and configure `NEXTAUTH_SECRET`, Google OAuth credentials, and the database as usual. Google login and live calendar data cannot be tested with build-only placeholder credentials.
+
+Apple signing uses team `VRTT45LLND`, the existing Apple Distribution certificate, and the `Loccal App Store` provisioning profile. App Store Connect app `6834292831` is named **Loccal: Calendar & Friends** (the shorter store name was already taken). The name on the phone remains Loccal.
+
+Archive and export with the configured signing assets:
+
+```bash
+/Users/andrewwinter/.local/bin/heavy-build bash scripts/archive-ios.sh
+```
+
+The script builds outside synced Documents to avoid file-provider metadata breaking signatures. The signed IPA is saved to `ios/build/export/Loccal.ipa`; `ios/build/archive-location.txt` points to the retained archive. Build output is ignored by Git. Increment `CURRENT_PROJECT_VERSION` before uploading another build.
+
+TestFlight distribution uses the Personal ASC profile and the **Internal testing** group:
+
+```bash
+asc --profile Personal publish testflight --app 6834292831 \
+  --ipa ios/build/export/Loccal.ipa --group b57c0872-be3d-43a0-a9ca-9cbe5aeb6917 --wait
+```
+
+Release records are stored in `ios/release/`. This workflow does not submit an App Store release or enable a public beta link.
+
+Version **1.0 (1)** was uploaded on 12 November 2026. Apple processing completed as **VALID**, and its internal build state is **IN_BETA_TESTING**. The build is assigned to **Internal testing**, with the account holder invited as its sole tester. The required backend changes are live at `https://loccal-web.vercel.app`. See `ios/release/build-1.json` for the signed IPA digest and App Store Connect identifiers. Live Google sign-in and physical-device behavior remain unverified.
+
 Optional one-time import if you already used the file-backed social store:
 
 ```bash

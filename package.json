@@ -8,12 +8,17 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "test:mobile": "node scripts/check-mobile-worker.mjs && node scripts/check-native-auth.mjs",
+    "ios:sync": "node scripts/prepare-ios.mjs && cap sync ios",
+    "ios:open": "cap open ios",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:import-social-json": "node scripts/import-social-json.mjs"
   },
   "dependencies": {
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "@prisma/client": "^6.4.1",
     "googleapis": "^150.0.1",
     "next": "^15.1.0",
@@ -22,6 +27,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",

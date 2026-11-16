@@ -145,6 +145,7 @@ export function MonthGrid({
                 type="button"
                 className="day-button"
                 aria-pressed={isSelected}
+                aria-label={`${dateKey}: ${displayLabels.join(", ") || "No location"}${hasHomeFallback ? ", home" : ""}${hasOverlap ? `, match with ${overlap?.friendNames.join(", ")}` : ""}`}
                 onClick={() => {
                   onSelectDate?.(dateKey);
                 }}

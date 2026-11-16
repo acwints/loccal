@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signInToLoccal } from "@/lib/sign-in";
 
 export function LoginCard() {
   const [busy, setBusy] = useState(false);
@@ -10,7 +10,7 @@ export function LoginCard() {
     if (busy) return;
     setBusy(true);
     setError("");
-    try { await signIn("google"); }
+    try { await signInToLoccal(); }
     catch { setError("Sign-in could not start. Check your connection and try again."); }
     finally { setBusy(false); }
   }
@@ -32,6 +32,10 @@ export function LoginCard() {
         {busy ? "Connecting…" : "Continue with Google"}
       </button>
       {error && <p role="alert">{error}</p>}
+      <details className="install-help">
+        <summary>Add Loccal to your home screen</summary>
+        <p>On iPhone, open Loccal in Safari, tap Share, then Add to Home Screen. On Android, open the Chrome menu and choose Install app or Add to Home screen.</p>
+      </details>
     </section>
   );
 }

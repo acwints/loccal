@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
+import { MobileApp } from "@/components/mobile-app";
 
 import "@/app/globals.css";
 
@@ -12,7 +13,19 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: "Loccal",
-  description: "Google Calendar monthly location rollup"
+  description: "Your calendar, city by city. Find out where your plans overlap with friends.",
+  appleWebApp: { capable: true, title: "Loccal", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" }
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8f8fc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0d11" }
+  ]
 };
 
 export default function RootLayout({
@@ -22,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={dmSans.variable}>
-      <body>{children}</body>
+      <body><MobileApp />{children}</body>
     </html>
   );
 }

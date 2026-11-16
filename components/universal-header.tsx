@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signIn, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
+import { signInToLoccal } from "@/lib/sign-in";
 import { useEffect, useMemo, useState } from "react";
 
 import { initialsFromName } from "@/lib/format-utils";
@@ -25,6 +26,7 @@ export function UniversalHeader({ user }: UniversalHeaderProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>("light");
+  const [signInError, setSignInError] = useState("");
   const isAuthed = Boolean(user);
   const initials = useMemo(() => initialsFromName(user?.name, user?.email), [user]);
 
@@ -48,8 +50,14 @@ export function UniversalHeader({ user }: UniversalHeaderProps) {
     setTheme(nextTheme);
   }
 
+  async function login() {
+    setSignInError("");
+    try { await signInToLoccal(); }
+    catch { setSignInError("Sign-in could not start. Please try again."); }
+  }
+
   return (
-    <header className="topbar">
+    <header className={`topbar${isAuthed ? " topbar-authed" : ""}`}>
       <div className="topbar-inner">
         <Link href={isAuthed ? "/dashboard" : "/"} className="brand-link">
           <span className="brand-mark" aria-hidden="true">
@@ -62,26 +70,32 @@ export function UniversalHeader({ user }: UniversalHeaderProps) {
           <nav className="topbar-nav" aria-label="Main navigation">
             <Link
               href="/dashboard"
+              aria-current={pathname.startsWith("/dashboard") ? "page" : undefined}
               className={`topbar-nav-link${pathname.startsWith("/dashboard") ? " active" : ""}`}
             >
-              Dashboard
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 3v4m10-4v4M3 11h18m-14 5h3m4 0h3" /></svg>
+              <span>Calendar</span>
             </Link>
             <Link
               href="/friends"
+              aria-current={pathname.startsWith("/friends") ? "page" : undefined}
               className={`topbar-nav-link${pathname.startsWith("/friends") ? " active" : ""}`}
             >
-              Friends
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3 21v-2a6 6 0 0 1 12 0v2m1-16a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5v2" /></svg>
+              <span>Friends</span>
             </Link>
             <Link
               href="/settings"
+              aria-current={pathname.startsWith("/settings") ? "page" : undefined}
               className={`topbar-nav-link${pathname.startsWith("/settings") ? " active" : ""}`}
             >
-              Settings
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 7h16M4 17h16" /><circle cx="9" cy="7" r="3" fill="var(--bg)" /><circle cx="15" cy="17" r="3" fill="var(--bg)" /></svg>
+              <span>Settings</span>
             </Link>
           </nav>
         ) : (
           <nav className="topbar-nav" aria-label="Main navigation">
-            <button type="button" className="primary-btn topbar-signin" onClick={() => signIn("google")}>
+            <button type="button" className="primary-btn topbar-signin" onClick={login}>
               Sign in
             </button>
           </nav>
@@ -138,13 +152,14 @@ export function UniversalHeader({ user }: UniversalHeaderProps) {
             </div>
           ) : (
             <div className="avatar-menu-wrap">
-              <button type="button" className="avatar-btn ghost-avatar" onClick={() => signIn("google")}>
+              <button type="button" aria-label="Sign in" className="avatar-btn ghost-avatar" onClick={login}>
                 <span>→</span>
               </button>
             </div>
           )}
         </div>
       </div>
+      {signInError && <p role="alert" className="error">{signInError}</p>}
     </header>
   );
 }
